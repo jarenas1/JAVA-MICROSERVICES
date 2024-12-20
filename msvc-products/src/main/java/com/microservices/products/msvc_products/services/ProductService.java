@@ -25,12 +25,12 @@ public class ProductService implements IProductSevice{
     @Transactional(readOnly = true)
     @Override
     public List<ProductEntity> findAll() {
-        return List.of();
+        return this.productRepository.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ProductEntity> findById(Long id) {
-        return Optional.empty();
+        return this.productRepository.findById(id);
     }
 }
