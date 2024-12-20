@@ -14,12 +14,12 @@ public class ProductEntity {
 
     private String name;
 
-    private Long price;
+    private Double price;
 
     @Column(name = "created_at")
     private LocalDate createdAt;
 
-    public ProductEntity(Long id, LocalDate createdAt, String name, Long price) {
+    public ProductEntity(Long id, LocalDate createdAt, String name, Double price) {
         this.id = id;
         this.createdAt = createdAt;
         this.name = name;
@@ -53,11 +53,11 @@ public class ProductEntity {
         this.name = name;
     }
 
-    public Long getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(Long price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 }

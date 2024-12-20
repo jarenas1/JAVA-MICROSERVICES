@@ -8,7 +8,7 @@ public class ProductDto {
 
     private Long id;
     private String name;
-    private  Long price;
+    private  Double price;
     private LocalDate createdAt;
 
     public LocalDate getCreatedAt() {
@@ -35,11 +35,11 @@ public class ProductDto {
         this.name = name;
     }
 
-    public Long getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(Long price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 }
