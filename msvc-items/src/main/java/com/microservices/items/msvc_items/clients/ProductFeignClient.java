@@ -9,7 +9,7 @@ import java.util.List;
 
 //ACA VAMOS A MANEJAR LA COMUNCACION ENTRE NUESTROS 2 SERVICIOS, LA IDEA ES INYECTAR ESTA CLASE EN NUESTRA CLASE SERVICE
 
-@FeignClient(url = "localhost:8001")  //PONEMOS EL PUERTO DONDE SE LEVANTA EL NOMBRE DEL SERVICIO
+@FeignClient( url = "localhost:8001", name = "msvc-products")  //PONEMOS EL PUERTO DONDE SE LEVANTA EL NOMBRE DEL SERVICIO
 public interface ProductFeignClient {
 
     @GetMapping()

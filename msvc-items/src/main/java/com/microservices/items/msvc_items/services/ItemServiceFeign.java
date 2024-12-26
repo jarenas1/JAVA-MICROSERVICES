@@ -2,6 +2,7 @@ package com.microservices.items.msvc_items.services;
 
 import com.microservices.items.msvc_items.clients.ProductFeignClient;
 import com.microservices.items.msvc_items.entities.ItemEntity;
+import feign.FeignException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,6 +29,10 @@ public class ItemServiceFeign implements IItemService {
 
     @Override
     public Optional<ItemEntity> findById(Long id) {
-        return Optional.of( new ItemEntity(this.productFeignClient.details(id),10));
+        try{
+            return Optional.of( new ItemEntity(this.productFeignClient.details(id),10));
+        } catch(FeignException e){
+            return Optional.empty();
+        }
     }
 }

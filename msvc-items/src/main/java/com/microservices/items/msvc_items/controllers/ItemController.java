@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,13 +27,13 @@ public class ItemController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ItemEntity> getItemById(@PathVariable Long id) {
+    public ResponseEntity<?> getItemById(@PathVariable Long id) {
         Optional<ItemEntity> optionalItem = itemService.findById(id);
 
         if (optionalItem.isPresent()) {
             return ResponseEntity.ok(optionalItem.get());
         } else {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(400).body(Collections.singletonMap("message", "Te product cant be founded in the products service"));
         }
     }
 }
