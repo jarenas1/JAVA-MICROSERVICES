@@ -9,5 +9,5 @@ public interface IItemService {
 
     List<ItemEntity> findAll();
 
-    Optional<ItemEntity> findById();
+    Optional<ItemEntity> findById(Long id);
 }

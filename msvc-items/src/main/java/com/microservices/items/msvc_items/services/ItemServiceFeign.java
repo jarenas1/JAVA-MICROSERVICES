@@ -1,0 +1,33 @@
+package com.microservices.items.msvc_items.services;
+
+import com.microservices.items.msvc_items.clients.ProductFeignClient;
+import com.microservices.items.msvc_items.entities.ItemEntity;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
+
+@Service
+public class ItemServiceFeign implements IItemService {
+
+    private final ProductFeignClient productFeignClient;
+
+    public ItemServiceFeign(ProductFeignClient productFeignClient) {
+        this.productFeignClient = productFeignClient;
+    }
+
+    @Override
+    public List<ItemEntity> findAll() {
+        return this.productFeignClient.findAll().stream().map( product ->{ //Pasamos de product a item list
+            Random cuantity = new Random(); //generamos la cantidad random
+            return new ItemEntity(product, cuantity.nextInt(10) + 1);  //se suma 1 ya que genera de 0 a 9
+        }).collect(Collectors.toList()); //Transformamos a una lista que se devolvera
+    }
+
+    @Override
+    public Optional<ItemEntity> findById(Long id) {
+        return Optional.of( new ItemEntity(this.productFeignClient.details(id),10));
+    }
+}

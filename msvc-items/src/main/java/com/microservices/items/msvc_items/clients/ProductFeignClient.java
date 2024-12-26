@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-//ACA VAMOS A MANEJAR LA COMUNCACION ENTRE NUESTROS 2 SERVICIOS
+//ACA VAMOS A MANEJAR LA COMUNCACION ENTRE NUESTROS 2 SERVICIOS, LA IDEA ES INYECTAR ESTA CLASE EN NUESTRA CLASE SERVICE
 
 @FeignClient(url = "localhost:8001")  //PONEMOS EL PUERTO DONDE SE LEVANTA EL NOMBRE DEL SERVICIO
 public interface ProductFeignClient {
