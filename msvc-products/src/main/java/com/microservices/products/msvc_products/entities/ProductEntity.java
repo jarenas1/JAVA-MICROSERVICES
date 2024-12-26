@@ -14,6 +14,17 @@ public class ProductEntity {
 
     private String name;
 
+    @Transient
+    private int port;
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
     private Double price;
 
     @Column(name = "created_at")
