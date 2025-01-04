@@ -10,6 +10,15 @@ public class ProductDto {
     private String name;
     private  Double price;
     private LocalDate createdAt;
+    private int port;
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
 
     public LocalDate getCreatedAt() {
         return createdAt;
