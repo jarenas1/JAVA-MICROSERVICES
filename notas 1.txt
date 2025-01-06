@@ -1,0 +1,80 @@
+Una vez creados nuestros 2 servicios, debemos conectarlos mediante un cliente http, en este caso Feign, también se puede usar spring webflux, que permite peticiones asíncronas,etc…
+
+Con feign debemos en nuestra clase principal añadir la anotación @EnableFeignClients y creamos un package que es donde crearemos la petición, la cual se llamara EntityNameFeignClient, esta interfaz deberá estar anotada con @FeignClient(url ="url del servicio", name = "nombreQueApareceEnElPOM)
+
+En la interfaz deberemos crear varios métodos que nos permitan traer cosas del otro servicio, y deben estar anotadas con get, post, etc.. indicando el tipo de petición que harán, eSTA INTERFAZ, LUEGO SERA AÑADIDA A NUESTRA CLASE SERVICE POR MEDIO DE INYECCION
+
+
+NORMALMENTE LOS SERVICIOS NO SE COMUNICAN ASI, ESTO ES PARA LA INTRODUCCION AL CONCEPTO DE MICROSERVICIOS
+
+RECIRDAR EL USO DE TRY CATCH, NOS SIRVE PARA QUE EN CASO DE UN ERROR PODAMOS DEVOLVER OTRA COSA POR EJEMPLO UN OPTIONAL VACIO.
+
+
+Recordar que es buena practica mandar un mensaje cad que se lance una excepción, se puede enviar un json, creando un hashmap, se puede crear rápidamente asi sin tener que poder new Hashmap. Collections.singletonMap("key","value")
+
+
+
+CONGIGURACION DE PUERTOS EN MSVC PARA BALANCEO DE CARGA
+
+Nos ayuda a repartir el trabajo entre nuestros servicios levantados o nuestrosnesoejos de servicios para evitar que la aplicación se caiga
+
+Para poder diferenciar nuestros servicios, añadiremos un atrbiuto a la entidad el cual identifique el puerto, este no estará en la base de datos, para esto anotamos este atrbuto con @Transient
+
+Luego en el servicio, donde estemois devolviento el objeto, debemos setearle el puerto, este se traerá del entorno, es decir se traera automáticamente, para esto lo inyectamos, desde Enviroment. y lo parseamos al tado necesarioi ya que viene coimo un string
+
+Integer.parseInt()
+
+
+Luego debemos añadir la dependencia spring cloud load balancer en los ítems
+
+También como aca esta feign, vamos a borrar la url que teníamos en el servicio de feign  la añadiremos en el properties.
+
+
+spring.cloud.discovery.client.simple.instances.nameDelServicoDeDondeTaemosdatos[numero].uri=http://urlDelServicio
+
+Y ASI PODRIAMOS MAPEAR MUCHOS SERVICIOS AHI EN EL POM
+
+
+---
+
+Lo visto anteriormente fue para generar la comunicación por medio de feign, pero podemos usar otras formas para realizar la comunicación http, como webclient
+
+Para implementar esto, creamos una clase para configurarlo, anotada con @Configuration, aca creamos un método, el cual inicializara el web client, debemos añadirlo como un vean con @Bean y debemos añadirle un balanceo de carga, con @LoadBalanced, FEIGN LO TRAE POR DEFECTO 
+
+ @Bean
+    @LoadBalanced
+    WebClient.Builder WebClient(){
+        return WebClient.builder();
+    }
+
+
+Ahora creamos un servicio para hacer las peticiones, de la siguiente manera 
+
+   @Override
+    public List<ItemEntity> findAll() {
+        return webClient.build().get().uri("http://msvc-products") //EN VEZ DE UNA URL USAMOS LOS NOBRES DEL BALANCEO DE CARGA DEL PROPETIES
+                .accept(MediaType.APPLICATION_JSON) //RECIBIMOS SOLO RESPUESTAS JSON
+                .retrieve() //LO TRANFORMAMOS
+                .bodyToFlux(ProductDto.class) //LE DAMOS EL TIPO DE DATO
+                .map(product -> new ItemEntity(product, new Random().nextInt(10) + 1)) //Creamos una lista de items con los productos recibidos
+                .collectList() //CREAMOS UNA LISTA
+                .block(); //BLOQUEAMOS EL REQUEST YA QUE NO ES UNA APLICACION REACTIVA
+    }
+
+Luego hacemos lo mismo para el otro método 
+
+ @Override
+    public Optional<ItemEntity> findById(Long id) {
+        //PASAMOS LOS PARAMETROS DNECESARIOS PARA LA PETICION HTTP
+        HashMap<String, Long> params = new HashMap<>();
+        params.put("id", id);
+
+        return Optional.ofNullable(webClient.build().get().uri("http://msvc-products/{id}", params)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(ProductDto.class) //Usamos MONO YA QUESOLO SE RECIBIRA UN ELEMENTO
+                .map(product -> new ItemEntity(product, new Random().nextInt(10) + 1))
+                .block());
+    }
+
+Una vez creados los servicios creamos un controller para estos, y podremos ver que el flujo es bastante similar a feign
