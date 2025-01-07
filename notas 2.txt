@@ -1,0 +1,31 @@
+COMPONENTES PRINCIPALES DE S´RING CLOUD
+
+EUREKA:Es un servidor de nombre para registrar los microservices, es por asi decirlo un contenedor, y se descubre autamitamente por medio de eureka server cada que arrancala aplicación 
+
+BALANCEADOR DE CARGA: Es algo propio de spring cloud
+
+API GETEWAY: Trabaja con web flux, por ende es asíncrono, no bloqueante. Se encarga de enrutar dinámicamente cada microservicio, también busca la mejor instancia de cada micro servicio disponible
+
+
+CREAR SERVIDORDE NOMBRE EUREKA
+
+Creamos un nuevo proyecto de spring y añadimos la dependencia eureka server
+
+Anotamos la clase principal con @EnableEurekaServer
+
+luego en el properties añadimos el puerto por defecto e indicamos que esto no será un micro servicio 
+
+spring.application.name=eureka-server
+server.port=8761
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+Añadimos una dependencia que indica que serán clientes de un servidor de eureka en nuestros servicios
+
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+
+Luego en cada servicio, debemos en el properties, añadir donde estará el servidor del cual será cliente, se hace con el siguiente comando eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+CUANDO DESEEMOS LEVANTAR ALGO, DEBE ESTAR LEVANTADO EL SERVIDOR DE EUREKA
