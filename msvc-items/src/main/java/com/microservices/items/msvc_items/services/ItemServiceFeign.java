@@ -3,6 +3,7 @@ package com.microservices.items.msvc_items.services;
 import com.microservices.items.msvc_items.clients.ProductFeignClient;
 import com.microservices.items.msvc_items.entities.ItemEntity;
 import feign.FeignException;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+@Primary
 @Service
 public class ItemServiceFeign implements IItemService {
 
