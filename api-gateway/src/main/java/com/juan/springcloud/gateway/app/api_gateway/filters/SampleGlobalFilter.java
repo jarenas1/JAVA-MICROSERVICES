@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.http.MediaType;
+
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -34,7 +34,7 @@ public class SampleGlobalFilter implements GlobalFilter, Ordered {
             });
             //Aparte de tirar logs podemos modificar la respuesta que dara usando el exchange
             exchange.getResponse().getCookies().add("color", ResponseCookie.from("color","red").build());
-            exchange.getResponse().getHeaders().setContentType(MediaType.TEXT_PLAIN);
+//            exchange.getResponse().getHeaders().setContentType(MediaType.TEXT_PLAIN);
         })); //RECORDAR LO QUE ESTA EN EL EXCHANGE
     }
 
