@@ -19,4 +19,7 @@ spring:
             - Path=/api/items/**
           filters:
             - StripPrefix=2
+            - AddRequestHeader=token-request, juanjo
+            - AddResponseHeader=token-response, 1234567
+            - AddRequestParameter=name, Value
 
