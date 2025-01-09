@@ -1,0 +1,142 @@
+API GETEWAY:
+
+Es un servidor de enrutamiento dinamico, con filtros como seguridad, manejo de error, etc...
+
+Usa programación reactiva
+
+Para su creación, debemos crear un nuevo proyecto, añaimos devtools, eureka Discovery client y reactive Gateway
+
+En este debemos configurar las rutas, podemos hacerlo en el properties o en un yml
+
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: msvc-products   //INDICAMOS EL NOMBRE DEL MICRO, UN NOMBRE UNICO
+        uri: lb://msvc-products //INICIAMOS EL BALANCEADOR DE CARGA
+        predicates: //DEFINIMOS UNA CONDICION PARA ACCEDER A ESTA RUTA, ES DECIR, CUANDO ALGUIEN ACCEDA AL GATEWAY Y PONGA ESTA RUTA, SE ENVIARA A ESTE SERVICIO
+        - Path=/api/products/**
+        filters:
+        - StripPrefix=2 //ELIMINAMOS LAS 2 PRIMERAS PARTES DEL PATH, ES DECIR EL api/products, ENVIANDO AL SERVICIO SOLO LA PARTE FINAL
+      - id: msvc-items
+        uri: lb://msvc-items
+        predicates:
+        - Path=/api/items/**
+        filters:
+        - StripPrefix=2
+
+
+
+-- FILTROS:
+
+Podemos crear filtros en el gate way, y cada solicitud que entre a un servicio por medio de este, deba pasar por el filtro, EJ seguridad, SE PUEDEN AÑADIR ANTES O DESPUES DEL REQUEST Y SE PUEDE AÑADIR GLOBALMENTE A TODAS LAS RUTAS O A UNA ESPECIFICA
+
+
+Para crear un filtro GLOBAL:
+
+creamos una clase, la anotamos con @Component e implementamos la interfaz GlobalFilter
+
+ @Override //exchange maneja request y response, chain es la cadena de filtros, mono es un objeto rectivo, flux son varios
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        return null;
+    }
+
+el PRE se envia todo normal antes del retornar la respuesta, el post se maneja en el return llamando a .then(), debido a que como es oprogramacion reactiva es simular a una promesa, dentro de este va una ufuncion lambda
+
+  logger.info("Global filter executing PRE...");
+    return chain.filter(exchange).then(Mono.fromRunnable(()->{
+        logger.info("Global filter executing POST...");
+
+//Aparte de tirar logs podemos modificar la respuesta que dara usando el exchange
+        exchange.getResponse().getCookies().add("color", ResponseCookie.from("color","red").build());
+        exchange.getResponse().getHeaders().setContentType(MediaType.TEXT_PLAIN);    
+    })); //RECORDAR LO QUE ESTA EN EL EXCHANGE
+
+
+RECORDARRRR!!! LA DIFERENCIA ENTRE POST Y PRE, ES EL ORDEN
+
+
+
+-- FILTRO PARA RUTA ESPECIFICA (MSVC)
+
+Creamos un archivo, este se debe llamar …..GatewayFilterFactory   SI O SIIII
+
+Ahora en este, podemos crear una clase la cual va a manejar los atrbutos por ejemplo de una cookie, de un header, o lo que deseemos manejar. se puede crear dentro de esta misma clase
+
+Ahora la clase inicial que creamos la anoamos con @Component y le extendemos la clase abstracta AbstractGatewayFilterFactory<PASAMOS A CLASE DE ENTIDAD QUE CREAMOS>
+
+Luego pasamos a la clase, la clase entidad que se creo, por medio de un super
+
+ public SampleCookieGatewayFilterFactory() {
+        super(ConfigurationCookie.class);
+    }
+
+Al extender la clase abstracta, se nos implementara una clase, la cual es en la que trabajaremos,
+
+
+en esta pasamos como parámetro nuestra clase entidad creada, retornamos el exchanfe y el chain, y con una arrow function, comenzamos a realizar los filtros pre, y retornamos el Exchange, y con el then accedemos a los filtros post
+
+   @Override
+    public GatewayFilter apply(ConfigurationCookie config) {
+        return (exchange, chain) -> {
+            //FILTROS PRE
+            logger.info("fltro pre del gateway especifico " + config.getMessage());
+            return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+                //FILTROS POST
+                Optional.ofNullable(config.value).ifPresent(cookie -> {
+                    exchange.getResponse().addCookie(ResponseCookie.from(config.getName(),cookie).build());
+                });
+                logger.info("fltro post del gateway especifico " + config.getMessage());
+            }));
+        };
+    }
+
+
+
+LUEGO de crear el filtro, debemos añadirlo a una ruta(servicio) en el yml
+
+Para esto nos vamos al servicio deseado, y en la parte de filters, añadimos un - name: Nombre, El Nombre, es el de la clase que se creo SIN PONER EL SUFIJO GatewayFilterFactory
+
+Luego ejamos renglón y ponemos args a la misma altura de name, pero sin -, aca ponemos: y dejamos espacio.
+
+Abajo pondremos cada uno de los atributos necesarios para la clase entidad que creamos, por ejemplo nombre de la cookie, valor, etc...
+
+          filters:
+            - StripPrefix=2
+            - name: SampleCookie
+              args:
+                message: Mensaje de la cookie q chimba, PRODUCTOS
+                name: user
+                value: JuanitoJose
+
+
+TENER EN CUENTA QU ESTA CLASE TAMBIEN OFRECE OTROS METODOS PARA POR EJEMPLO NOMBRAR LA CLASE DIFERENTE Y LLAMARLA EN EL YML POR MEDIO DE ESE NOMBRE, O PARA PASAR LOS PAARAMETROS DE FORMA DIFERENTE 
+
+
+
+IMPLEMENTAR LOS FILTROS POR DEFECTO 
+
+El framework, da una serie de filtros por defecto, los cuales podemos implementar a los servicios
+
+Algunos de estos son:
+            - AddRequestHeader=token-request, juanjo
+            - AddResponseHeader=token-response, 1234567
+            - AddRequestParameter=name, Value
+
+PARA VER MAS REVISAR LA DOCUMENTACION DE REACTIVIDAD DE SPRING CLOUD
+
+
+
+-- PREDICATES
+
+Son una serie de condicionales que debe tener una ruta para poder ejecutar un micro servicio, por ejemplo la ruta
+
+
+Si alguno de los predicates que creemos aca, no se cumple, no se podrá acceder al micro, ejemplo 
+
+          predicates:
+            - Path=/api/products/**
+            - Header=token, 12345
+            - Method=GET, POST
+            - Query=color, verde #ESTOS SON QUERY PARAMS
+            - Cookie=color, red
