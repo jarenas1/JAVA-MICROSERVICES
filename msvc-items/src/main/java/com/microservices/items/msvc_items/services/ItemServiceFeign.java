@@ -31,10 +31,10 @@ public class ItemServiceFeign implements IItemService {
 
     @Override
     public Optional<ItemEntity> findById(Long id) {
-        try{
+//        try{
             return Optional.of( new ItemEntity(this.productFeignClient.details(id),10));
-        } catch(FeignException e){
-            return Optional.empty();
-        }
+//        } catch(FeignException e){
+//            return Optional.empty();
+//        }
     }
 }

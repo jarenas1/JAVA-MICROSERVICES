@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping
@@ -27,7 +28,16 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductEntity> details (@PathVariable Long id){
+    public ResponseEntity<ProductEntity> details (@PathVariable Long id) throws InterruptedException {
+        //PROBANDP EL RESILENCE4J EN CASO DE ERROR
+        if (id.equals(10L)){
+            throw new IllegalStateException("error de resilence");
+        }
+
+        //PROBANDO EL RESILENCE EN CASO DE TIEMPO DE ESPERA
+        if (id.equals(7L)){
+            TimeUnit.SECONDS.sleep(5L);
+        }
         Optional<ProductEntity>product = this.productService.findById(id);
         if (product.isPresent()){
             return ResponseEntity.ok(product.orElseThrow());

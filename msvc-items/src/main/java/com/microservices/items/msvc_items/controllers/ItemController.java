@@ -1,22 +1,30 @@
 package com.microservices.items.msvc_items.controllers;
 
 import com.microservices.items.msvc_items.entities.ItemEntity;
+import com.microservices.items.msvc_items.entities.ProductDto;
 import com.microservices.items.msvc_items.services.IItemService;
 import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Time;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 public class ItemController {
 
     @Autowired
     private IItemService itemService;
+
+    @Autowired
+    private CircuitBreakerFactory  circuitBreakerFactory;
 
     @GetMapping
     public List<ItemEntity>gettItems(@RequestParam(name ="name", required = false)String name,
@@ -28,10 +36,18 @@ public class ItemController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getItemById(@PathVariable Long id) {
-        Optional<ItemEntity> optionalItem = itemService.findById(id);
-
-        if (optionalItem.isPresent()) {
-            return ResponseEntity.ok(optionalItem.get());
+        Optional<ItemEntity> itemOptional = circuitBreakerFactory.create("items").run(()->itemService.findById(id), e ->{
+            //CODIGO EN CASO DE ERROR
+            System.out.println(e.getMessage());
+            ProductDto productDto = new ProductDto();
+            productDto.setName("fallaConResilence");
+            productDto.setId(1L);
+            productDto.setPrice(100.0);
+            productDto.setCreatedAt(LocalDate.now());
+            return Optional.of(new ItemEntity(productDto, 5));
+        });
+        if (itemOptional.isPresent()) {
+            return ResponseEntity.ok(itemOptional.get());
         } else {
             return ResponseEntity.status(400).body(Collections.singletonMap("message", "Te product cant be founded in the products service"));
         }
