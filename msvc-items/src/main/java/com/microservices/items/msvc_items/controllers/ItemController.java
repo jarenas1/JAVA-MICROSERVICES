@@ -49,7 +49,7 @@ public class ItemController {
         if (itemOptional.isPresent()) {
             return ResponseEntity.ok(itemOptional.get());
         } else {
-            return ResponseEntity.status(400).body(Collections.singletonMap("message", "Te product cant be founded in the products service"));
+            return ResponseEntity.status(404).body(Collections.singletonMap("message", "Te product cant be founded in the products service"));
         }
     }
 }
