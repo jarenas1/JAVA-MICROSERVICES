@@ -3,6 +3,7 @@ package com.microservices.items.msvc_items.controllers;
 import com.microservices.items.msvc_items.entities.ItemEntity;
 import com.microservices.items.msvc_items.entities.ProductDto;
 import com.microservices.items.msvc_items.services.IItemService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
@@ -34,6 +35,8 @@ public class ItemController {
         return itemService.findAll();
     }
 
+    //SIN UNSAR LA ANOTACION Y USANDO LA CONFIGURACION DE BEAN
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getItemById(@PathVariable Long id) {
         Optional<ItemEntity> itemOptional = circuitBreakerFactory.create("items").run(()->itemService.findById(id), e ->{
@@ -51,6 +54,28 @@ public class ItemController {
         } else {
             return ResponseEntity.status(404).body(Collections.singletonMap("message", "Te product cant be founded in the products service"));
         }
+    }
+
+    @CircuitBreaker(name = "items", fallbackMethod = "getFallBackMethosProduct") //Este nombre sera el identificador del controlador
+    @GetMapping("/details/{id}")
+    public ResponseEntity<?> getItemById2(@PathVariable Long id) {
+        Optional<ItemEntity> itemOptional = itemService.findById(id);
+        if (itemOptional.isPresent()) {
+            return ResponseEntity.ok(itemOptional.get());
+        } else {
+            return ResponseEntity.status(404).body(Collections.singletonMap("message", "Te product cant be founded in the products service"));
+        }
+    }
+
+    //EL METODO DEBE DEVOLVER LO MISMO QUE DEVUELVE EL METODO AL QUE ACOMPAÑARA
+    public ResponseEntity<?> getFallBackMethosProduct(Throwable e){
+        System.out.println(e.getMessage());
+        ProductDto productDto = new ProductDto();
+        productDto.setName("fallaConResilence");
+        productDto.setId(1L);
+        productDto.setPrice(100.0);
+        productDto.setCreatedAt(LocalDate.now());
+        return ResponseEntity.ok(new ItemEntity(productDto, 5));
     }
 }
 
