@@ -257,8 +257,42 @@ public CompletableFuture<ResponseEntity<ProductDto>> fallbackTimeout(Long id, Ex
 } 
 
 
-CONCLUSION DE LOS CIRCUITOS
+CONCLUCION DE LOS CIRCUITOS
 
 Podemos trabajarlos creando beans de configuración y lanzando todo desde el mismo controlador, es decir, un camino alternativo. O podemos hacerlo desde un yml, lo cual pude dar ciertos beneficios
 
 Para hacerlo desde eñ yml, debemos anotar nuestros controladores con las anotaciones vistas, y crear un método que será el fallback, el cual se enlazara en la anotación, podemos lanzar un método dependiendo de que error tengamos añadiendo en los atributos el tipo de error asi  id, ProductNotFoundException ex) { 
+
+
+
+IMPLEMENTACION DE CIRCUIT BREAKER EN API GATEWAY
+
+1. Añadir la dependencia
+
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+		</dependency>
+
+
+Como el Gateway es reactivo se añade la dependencia reactiva
+
+2. Añadimos en el yml las configuraciones de nuestro circuito o nuestros circuitos
+
+3. en la configuración de las rutas, en los filters, añadimos - CircuitBreaker=nNOBREdEcOntrolador, esto solo manejara timeout
+
+4. Si deseamos trabajar con excepciones, debemos añadir lo siguiente: 
+
+	borramos lo que se puso inicialmente y cambiamos por esto
+
+	      args:
+                name: products #NOMBRE DEL SERVICIO
+                statusCodes: 500, 404 #ETC ...
+                # SI FALLA ALGO REDIRIGIMOS A UNA URI
+                fallbackUri: forward:/api/items/5  
+
+	Todo esto en los filtros también, teniendo en cuenta los códigos de error que estamos buscando
+
+Notas:
+
+Podemos crear circuitos mas específicos en los servicios o unos mas generales en el Gateway, los del Gateway, la ruta del fallback es un manejo del error que se crea dentro de la aplicación del gateway, por ende la uri debe ser la del controlador creado
