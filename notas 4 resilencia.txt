@@ -124,4 +124,141 @@ Configuración de la llamada lenta
 
 -- CONFIGURACION EN EL YML:
 
-Esto también podría hacerse directamente en un yml para evitar de hacerl de forma programatica
+Esto también podría hacerse directamente en un yml para evitar de hacerl de forma programática
+
+EJ:1 
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 5
+    instances:
+      items:
+        baseConfig: default
+        # Puedes sobrescribir configuraciones específicas para 'items'
+        waitDurationInOpenState: 20s
+      orders:
+        baseConfig: default
+        # Configuración específica para 'orders'
+        slidingWindowSize: 15
+
+EJ:2
+resilience4j:
+  circuitbreaker:
+    configs:
+      default: #NOMBRE DE LA CONFIGURACION
+        sliding-window-size: 6
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 4
+        slow-call-duration-threshold: 3s
+        slow-call-rate-threshold: 50
+
+    instances: #INSTANCIAS A APLICAR
+      items: #NOMBRE DE NUESTRO CONTROLLER
+        base-config: default #NOMBRE DE LA CONFIGURACION CREADA ARRIBA
+
+        #RECORDAR QUE EL TIME LIMITER VA POIR FUERA DE LA CONFIGURACION INICIAL
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 4s
+    instances:
+      items:
+        base-config: default
+
+
+
+TENER EN CUENTA, PRIMARA LA CONFIGURACION DEL YML SOBRE LA DE BEAN
+
+
+-- ANOTACION @CIRCUITBREAKER
+
+Esta anotación lo que nos va a ayudar es a mejorar el código de los ontroladores donde se implementa el circuito
+
+Tener en cuenta que con esta configuración, debe estar la configuración del circuito desde un yml, no desde un vean
+
+También debemos añadir una dependencia, la de progrsamacion orientada a aspectos
+
+-- CAMINO ALTERNATIVO:
+
+Con esta forma de implemetar el circuito, no tendremos un camino alternativo, para implementarlo, dentro de la anotación, aparte del nombre que identificara ese controlador, debemos poner el nombre de un método que será el camino alternativo, Al crear el método, debemos tener en cuenta que estos deben devolver lo mismo
+
+
+-- USAR EL TIMEOUT DESADE YML
+
+Lo visto anteriormente nos permite manwejar un circuito pero sin usar el timeOut, para poder implementar esto, nuestro método aparte de la anotación anterior, también debe estar anotado con la anotacio @TimeLimiter, teniendo en cuenta que el método va a tener que devolver si o si CompletableFuture como tipo de dato, debido a que será relacionado con tiempo.
+
+
+
+POR OTRO LADO, LO IMPORTANTE ES USAR AMBOS, es decir. El @CircuitBreaker y el @TimeLimiter, Para esto se deben anotar los controladores con ambos métodos, y darles su name, el mismo del properties. además el qCircuitBreaker debe tener el nombre del camino alternativo, el cual como ya se explico es un método
+
+EJ: 
+    //METODO QUE MANEJARA TIEMPO Y OTRAS COSAS, DEBIDO A ESTO ES EL TIPO DE DATO QUE ESTAMOS USANDO
+    @CircuitBreaker(name = "items", fallbackMethod = "getFallBackMethosProduct") //Este nombre sera el identificador del controlador
+    @GetMapping("/details/{id}")
+    public CompletableFuture<ResponseEntity<?>> getItemById3(@PathVariable Long id) {
+        return CompletableFuture.supplyAsync(() -> {
+
+            Optional<ItemEntity> itemOptional = itemService.findById(id);
+
+            if (itemOptional.isPresent()) {
+                return ResponseEntity.ok(itemOptional.get());
+            } else {
+                return ResponseEntity.status(404).body(Collections.singletonMap("message", "Te product cant be founded in the products service"));
+            }
+        });
+    }
+
+
+
+Este camino alternativo debe estar si o si RETORNANDO CompletableFuture, YA QUE TAMBIEN SE ESTA TENIENDO EN CUENTA TIEMPO
+
+también podemos tener varios métodos alternativos dependiendo del error que lane el método principal
+EJ:
+
+@GetMapping("/{id}")
+@TimeLimiter(name = "items")
+@CircuitBreaker(name = "items", fallbackMethod = "fallbackTimeout")  // Especifica cuál fallback usar primero
+public CompletableFuture<ResponseEntity<ProductDto>> findById(@PathVariable Long id) {
+    return CompletableFuture.supplyAsync(() -> 
+        ResponseEntity.ok(service.findById(id)));
+}
+
+// Fallback para TimeoutException - se llamará cuando ocurra un timeout
+public CompletableFuture<ResponseEntity<ProductDto>> fallbackTimeout(Long id, TimeoutException ex) {
+    log.error("Timeout al buscar producto: " + ex.getMessage());
+    ProductDto fallbackProduct = new ProductDto();
+    fallbackProduct.setName("Producto temporal - Servicio lento");
+    return CompletableFuture.supplyAsync(() -> 
+        ResponseEntity.ok(fallbackProduct));
+}
+
+// Fallback para cuando no se encuentra el producto
+public CompletableFuture<ResponseEntity<ProductDto>> fallbackTimeout(Long id, ProductNotFoundException ex) {
+    log.warn("Producto no encontrado: " + ex.getMessage());
+    ProductDto fallbackProduct = new ProductDto();
+    fallbackProduct.setName("Producto no disponible temporalmente");
+    return CompletableFuture.supplyAsync(() -> 
+        ResponseEntity.ok(fallbackProduct));
+}
+
+// Fallback genérico para cualquier otra excepción
+public CompletableFuture<ResponseEntity<ProductDto>> fallbackTimeout(Long id, Exception ex) {
+    log.error("Error general: " + ex.getMessage());
+    ProductDto fallbackProduct = new ProductDto();
+    fallbackProduct.setName("Producto por defecto - Error en el servicio");
+    return CompletableFuture.supplyAsync(() -> 
+        ResponseEntity.ok(fallbackProduct));
+} 
+
+
+CONCLUSION DE LOS CIRCUITOS
+
+Podemos trabajarlos creando beans de configuración y lanzando todo desde el mismo controlador, es decir, un camino alternativo. O podemos hacerlo desde un yml, lo cual pude dar ciertos beneficios
+
+Para hacerlo desde eñ yml, debemos anotar nuestros controladores con las anotaciones vistas, y crear un método que será el fallback, el cual se enlazara en la anotación, podemos lanzar un método dependiendo de que error tengamos añadiendo en los atributos el tipo de error asi  id, ProductNotFoundException ex) { 

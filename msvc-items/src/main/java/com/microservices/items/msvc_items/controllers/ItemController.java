@@ -4,6 +4,7 @@ import com.microservices.items.msvc_items.entities.ItemEntity;
 import com.microservices.items.msvc_items.entities.ProductDto;
 import com.microservices.items.msvc_items.services.IItemService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -66,6 +68,22 @@ public class ItemController {
             return ResponseEntity.status(404).body(Collections.singletonMap("message", "Te product cant be founded in the products service"));
         }
     }
+    //METODO QUE MANEJARA TIEMPO Y OTRAS COSAS, DEBIDO A ESTO ES EL TIPO DE DATO QUE ESTAMOS USANDO
+    @CircuitBreaker(name = "items", fallbackMethod = "getFallBackMethosProduct1") //Este nombre sera el identificador del controlador
+    @TimeLimiter(name = "items")
+    @GetMapping("/ambos/{id}")
+    public CompletableFuture<ResponseEntity<?>> getItemById3(@PathVariable Long id) {
+        return CompletableFuture.supplyAsync(() -> {
+
+            Optional<ItemEntity> itemOptional = itemService.findById(id);
+
+            if (itemOptional.isPresent()) {
+                return ResponseEntity.ok(itemOptional.get());
+            } else {
+                return ResponseEntity.status(404).body(Collections.singletonMap("message", "Te product cant be founded in the products service"));
+            }
+        });
+    }
 
     //EL METODO DEBE DEVOLVER LO MISMO QUE DEVUELVE EL METODO AL QUE ACOMPAÑARA
     public ResponseEntity<?> getFallBackMethosProduct(Throwable e){
@@ -76,6 +94,19 @@ public class ItemController {
         productDto.setPrice(100.0);
         productDto.setCreatedAt(LocalDate.now());
         return ResponseEntity.ok(new ItemEntity(productDto, 5));
+    }
+
+    //FALLBACK DE TIMEOUT
+    public CompletableFuture<?> getFallBackMethosProduct1(Throwable e){
+        return CompletableFuture.supplyAsync(() -> {
+            System.out.println(e.getMessage());
+            ProductDto productDto = new ProductDto();
+            productDto.setName("fallaConResilence");
+            productDto.setId(1L);
+            productDto.setPrice(100.0);
+            productDto.setCreatedAt(LocalDate.now());
+            return ResponseEntity.ok(new ItemEntity(productDto, 5));
+        });
     }
 }
 
