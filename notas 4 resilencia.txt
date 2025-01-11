@@ -1,0 +1,127 @@
+Esto se implmenta pir medio de resilence4j
+
+Principales características de Resilience4j
+Resilience4j se centra en implementar patrones de resiliencia livianos y modulares, incluyendo:
+
+Circuit Breaker (Interruptor de circuito):
+
+Actúa como un interruptor entre el cliente y el servicio externo.
+Abre el circuito cuando detecta un número configurable de fallos, evitando realizar llamadas adicionales al servicio fallido.
+Estados:
+Closed (Cerrado): Las solicitudes fluyen normalmente.
+Open (Abierto): Las solicitudes se bloquean inmediatamente para evitar sobrecargar el sistema fallido.
+Half-Open (Medio abierto): Permite un número limitado de solicitudes para probar si el servicio se ha recuperado.
+Retry (Reintento):
+
+Vuelve a intentar una operación fallida un número configurado de veces antes de fallar por completo.
+Es útil para manejar errores temporales, como interrupciones breves en la red.
+Rate Limiter (Limitador de tasa):
+
+Restringe el número de solicitudes que se pueden enviar en un período de tiempo determinado.
+Útil para evitar la sobrecarga de servicios dependientes.
+Time Limiter (Limitador de tiempo):
+
+Establece un tiempo máximo para la ejecución de operaciones.
+Si una operación excede este tiempo, se cancela o genera un fallo.
+Bulkhead (Mamparo):
+
+Limita el número de solicitudes concurrentes que pueden ejecutarse contra un servicio.
+Aísla fallos de un componente para que no afecten al sistema completo.
+Cache (Caché):
+
+Almacena respuestas en memoria para reducir la carga en servicios externos.
+Fallback (Retorno alternativo):
+
+Define un comportamiento predeterminado (o alternativo) cuando un servicio falla.
+
+
+
+IMPLEMENTACION
+
+Se añade la dependencia al pom, Luego se simulan los errores, para ver como se manejarían, con un TimeOut se simula el tiempo muerto y con un throw  error
+
+Luego en este ontrolador, inyectamos la dependencia, @Autowired
+    private CircuitBreakerFactory  circuitBreakerFactory; 
+
+
+Y con este podemos hacer algo muy interesante y es lo siguiente:
+
+Optional<ItemEntity> itemOptional = circuitBreakerFactory.create("items").run(()->itemService.findById(id), e ->{
+            //CODIGO EN CASO DE ERROR
+            System.out.println(e.getMessage());
+            ProductDto productDto = new ProductDto();
+            productDto.setName("fallaConResilence");
+            productDto.setId(1L);
+            productDto.setPrice(100.0);
+            productDto.setCreatedAt(LocalDate.now());
+            return Optional.of(new ItemEntity(productDto, 5));
+        });
+
+Esto lo que hace es que se realice la petición al servicio, y si se devuelve un error, va a ejecutar lo que esta dntro de las llaves de la arrow function, y va a detectar las veces que salte error para decidir si abrir, medio abrir o cerrar el circuito.
+
+Esto lo forzamos para el ejemplo, modificando el controlador de productos por medio del id, si es 10, se lanzara un error, por ende al realizar peticiones con el id 10, se lanzara un error y el circuito lo captara y lo tendrá en cuenta si es más de 50 request de 100.
+
+
+PERSONALIZAR PAAMETROS DEL CIRCUITO.
+
+Como lo mencione anteriormente el circuito cambia de estado dependiendo de ciertos parámetros, como pueden ser la cantidad de errores, el cual se tiene en cuenta inicialmente si de 100 request el 50% es un error, pero lo que haeremos ahora es modificar este valor, por si deseamos que con 10 peticiones malas se lance un error, etc …
+
+  @Bean
+    Customizer<Resilience4JCircuitBreakerFactory> customizerCircuitBreaker(){
+        //en el parentesis se pasa el idetificador que se le dio a lo que entrara, en este caso fue el id en el controller
+        return (factory)-> factory.configureDefault(id ->{
+            return new Resilience4JConfigBuilder(id).circuitBreakerConfig(CircuitBreakerConfig
+                    .custom()
+                    .slidingWindowSize(10) //La cantidad de veces que se debe ejecutar para decidir a que parte del circuito entrar
+                    .failureRateThreshold(50) //porcentaje de fallos
+                    .waitDurationInOpenState(Duration.ofSeconds(10L))
+                    .permittedNumberOfCallsInHalfOpenState(5) //llamas en estado semi-abierto
+                    .build() //tiempo en estado abierto
+                    )
+                    .build();
+        });
+    }
+
+
+-- APLICAR STAS CONFIGURACIONES:
+
+El método anterior, contiene en la parte superior el configureDefault, lo que indica que esta configuración se apl9ciara por defecto a cualquier vean que se cree, pero si deseamos hacer que se aplique solo a lagunos controladores, debemos cambiar este configureDefault por factory.configure()
+
+@Bean
+Customizer<Resilience4JCircuitBreakerFactory> customizerCircuitBreaker() {
+    return factory -> {
+        // Configuración específica para "items"
+        factory.configure(builder -> builder
+            .circuitBreakerConfig(CircuitBreakerConfig.custom()
+                .slidingWindowSize(10)
+                .failureRateThreshold(50)
+ .slowCallDurationThreshold(Duration.ofSeconds(5L)) // Duración que debe tener para entrar en llamada lenta
+                    .slowCallRateThreshold(50) // % de llamadas que deben ser lentas para abrir circuito
+                .build())
+.timeLimiterConfig(TimeLimiterConfig.custom().timeoutDuration(Duration.ofSeconds(3)).build()) //tiempo que esperara la respuesta antes de lanzar error
+            .build(), "items");
+
+Siendo "ítems, el id que se declaro en el controlador en este lugar  Optional<ItemEntity> itemOptional = circuitBreakerFactory.create("items").run(()->itemService.findById(id), e ->{
+
+
+-- TIMEOUT  
+
+Para esto podemos añadir esta configuración en nuestro bean 
+
+.timeLimiterConfig(TimeLimiterConfig.custom().timeoutDuration(Duration.ofSeconds(3)).build()) //tiempo que esperara la respuesta antes de lanzar error
+
+
+-- LLAMADA LENTA:  
+
+Es lo mismo que el timeOut, la diferencia es que esta lo que hará es que si no se realiza la llamada en el tiempo designado, contara el error, pero no lo lanzara, seguirá eperando hasta que se ejecute el request, mientras que 
+el timeout si no se ejecuta antes del tiepo designado contara ek error y lo lanzara o se ira al camino aalternativo dependiendo de nuestra implementación 
+
+Configuración de la llamada lenta
+
+.slowCallDurationThreshold(Duration.ofSeconds(5L)) Duración que debe tener para entrar en llamada lenta
+.slowCallRateThreshold(50) // % de llamadas que deben ser lentas para abrir circuito
+
+
+-- CONFIGURACION EN EL YML:
+
+Esto también podría hacerse directamente en un yml para evitar de hacerl de forma programatica

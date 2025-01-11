@@ -36,7 +36,7 @@ public class ProductController {
 
         //PROBANDO EL RESILENCE EN CASO DE TIEMPO DE ESPERA
         if (id.equals(7L)){
-            TimeUnit.SECONDS.sleep(1L);
+            TimeUnit.SECONDS.sleep(3L);
         }
         Optional<ProductEntity>product = this.productService.findById(id);
         if (product.isPresent()){
