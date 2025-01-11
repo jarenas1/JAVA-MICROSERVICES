@@ -1,3 +1,28 @@
+resilience4j:
+  circuitbreaker:
+    configs:
+      default: #NOMBRE DE LA CONFIGURACION
+        sliding-window-size: 6
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 4
+        slow-call-duration-threshold: 7s
+        slow-call-rate-threshold: 50
+
+    instances: #INSTANCIAS A APLICAR
+      products: #NOMBRE DE NUESTRO CONTROLLER
+        base-config: default #NOMBRE DE LA CONFIGURACION CREADA ARRIBA
+
+        #RECORDAR QUE EL TIME LIMITER VA POIR FUERA DE LA CONFIGURACION INICIAL
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+    instances:
+      products:
+        base-config: default
+
+
 spring:
   cloud:
     gateway:
@@ -12,11 +37,17 @@ spring:
 #            - Cookie=color, red
           filters:
             - StripPrefix=2
-            - name: SampleCookie
+            - name: CircuitBreaker #PARA PODER HACER QUE LANCE LOS ERRORES POR MEDIO DE EXCEPCIONES DEBEMOS INIDCAR QUE TIPO DE ERORES VA A RECIBIR ACA
               args:
-                message: Mensaje de la cookie q chimba, PRODUCTOS
-                name: user
-                value: JuanitoJose
+                name: products #NOMBRE DEL SERVICIO
+                statusCodes: 500, 404 #ETC ...
+                # SI FALLA ALGO REDIRIGIMOS A UNA URI
+                fallbackUri: forward:/api/items/5
+#            - name: SampleCookie
+#              args:
+#                message: Mensaje de la cookie q chimba, PRODUCTOS
+#                name: user
+#                value: JuanitoJose
         - id: msvc-items
           uri: lb://msvc-items
           predicates:
