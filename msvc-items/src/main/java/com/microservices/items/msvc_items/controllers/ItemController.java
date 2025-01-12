@@ -7,6 +7,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,12 +17,24 @@ import java.sql.Time;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @RestController
 public class ItemController {
+
+    //PRUEBA DE SERVIDOR DE CONFIGURACION
+    @Value("${configuration.texto}")
+    private String text;
+
+    @GetMapping("/fetch-configs")
+    public ResponseEntity<?> fetchConfig(){
+
+        Map<String, String> config = Collections.singletonMap("text", text);
+        return ResponseEntity.ok(config);
+    }
 
     @Autowired
     private IItemService itemService;
