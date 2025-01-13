@@ -1,0 +1,60 @@
+Podemos centralizar toda la configuración de nuestros microservicios para evitar el desorden en cada unom podemos guardar estos en git/GitHub 
+
+Para esto creamos un nuevo proyecto con config server y devtools
+Luego vamos a la clase principal y la anotamos con @EnableConfigServer
+Se suele configurar el puerto para este en el 8888
+También el properties debe contener el repo de git donde se guardara la configuración, se añade asi
+spring.cloud.config.server.git.uri=file:///C:/Usuarios/juanj/OneDrive/Escritorio/config
+
+CREAR CONFIGURACION:
+
+Aclarar que esta configuración primara sobre la del properties
+
+Vamos a la terminal y entramos a la carpeta
+
+$ echo server.port=8005 > msvc-items.properties, esto creera un properties con ese nombre, por ende como ya tenemos enlazado el servidor de configuración con el repo, podremos hacer un get del servidor con /nombreDelServicio
+
+PODEMOS TENER VARIOS AMBIENTES DEPENDIENDO DE LA ETAPA DEL PROYECTO, para esto podemos crear varios properties para cada servicio y al final añadir -dev, -test, etc …
+
+
+-- CONSUMIR CONFIGURACION DESDE EL SERVICIO
+
+1 Añadir la dependencia: 
+
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-bootstrap</artifactId>
+		</dependency>
+
+2. creamos un bootstrap.properties, y añadimos:
+
+spring.application.name=msvc-items //NOMBRE DEL SERVICIO
+spring.cloud.config.uri=http://localhost:8888 //RUTA DEL SERVIDOR DE CONFIGURACION
+
+Ahora podremos usar los valores que tengamos en el servidor de configuracion y tambien variables alli declaradas
+
+
+-- AÑADIR AMBIENTEES AL REPO
+
+Simplemente vamos a crear mas properties, indifcando al final el tipo de ambiente al cual se le asignaran esas configurqaciones, el que no tiene nada sera el por default
+
+Ahora desde postman al hacer alguna peticion al servidor de configuracion añadimos solamente el nombre del micro servicio /Entorno deseado
+
+
+- CONFIGURR UN PROFILE
+
+eSTO SE HACE CON EL OBJETIVO DE USAR UN ENTORNO EPECIFICO, Por ejemplo dev, prod, etc …
+
+Para esto nos vamos al servicio ue cosume la configuración y le añaimos spring.profiles.active=Name, todo esto en el arhivo Bootstrap.properties
+
+
+-- REFRESCAR AUTOMATICAMENTE
+
+
+lA IDEA DE ESTO ES QUE SI MODIFICAMOS ALGO DELAS CONFIGURACIONES NO TENGMOS QUE LEANAR DE NUEVO EL SERVIDOR, SI NO QUE SE REFRESQUE AUTOMATICAMENTE.
+
+pARA ESTO DEBEMOS ANOTR EL CONTROLADOR DONDE SE ESTA ACCDIENDO AL ENTORNO O AL PROPERTIES CON Value, con la anotacion @RefreshScope, esto lo que hace es rinyectar las dependencias y valores
