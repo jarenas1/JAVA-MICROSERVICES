@@ -2,6 +2,7 @@ package com.microservices.products.msvc_products.services;
 
 import com.microservices.products.msvc_products.entities.ProductEntity;
 import com.microservices.products.msvc_products.repositories.ProductRepository;
+import jakarta.ws.rs.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -44,5 +45,40 @@ public class ProductService implements IProductSevice{
             productEntity.setPort(Integer.parseInt(environment.getProperty("local.server.port")));
             return productEntity;
         });
+    }
+
+    @Override
+    @Transactional
+    public ProductEntity save(ProductEntity productEntity) {
+        try{
+            return this.productRepository.save(productEntity);
+        }catch (Exception e){
+            throw new IllegalStateException("The user cant be saved");
+        }
+
+    }
+
+    @Override
+    public ProductEntity update(ProductEntity productEntity, Long id) {
+        ProductEntity product = this.productRepository.findById(id).orElseThrow(()-> new IllegalStateException("The product cant be updated"));
+
+        product.setName(productEntity.getName());
+        product.setPrice(productEntity.getPrice());
+
+        try{
+            return this.productRepository.save(product);
+        }catch (Exception e){
+            throw new IllegalStateException("The product cant be updated");
+        }
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        try{
+            ProductEntity product = this.productRepository.findById(id).orElseThrow(()-> new NotFoundException("The product cant be deleted"));
+            productRepository.delete(product);
+        }catch (Exception e){
+            throw new IllegalStateException("The product cant be deleted");
+        }
     }
 }

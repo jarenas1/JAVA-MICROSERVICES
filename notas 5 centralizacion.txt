@@ -58,3 +58,25 @@ Para esto nos vamos al servicio ue cosume la configuración y le añaimos spring
 lA IDEA DE ESTO ES QUE SI MODIFICAMOS ALGO DELAS CONFIGURACIONES NO TENGMOS QUE LEANAR DE NUEVO EL SERVIDOR, SI NO QUE SE REFRESQUE AUTOMATICAMENTE.
 
 pARA ESTO DEBEMOS ANOTR EL CONTROLADOR DONDE SE ESTA ACCDIENDO AL ENTORNO O AL PROPERTIES CON Value, con la anotacion @RefreshScope, esto lo que hace es rinyectar las dependencias y valores
+
+Lo Siguiente es crear una ruta de actuator, para esto:
+
+Añadimos la dependencia:
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+Luego, debemos realizar una petición e tipos post a la ruta localhost:xxxx/actuator/refresh
+
+
+-- SUBIR CONFIGURACION DEL PROYECTO A GITHUB:
+
+Para esto enlazamos un repo con el archivo local
+
+Copiamos dirección del repo
+
+Vamos al servidor de configuración, y en vez de dejar la ruta local, ponermos el enlace de gh asi:
+
+spring.cloud.config.server.git.uri=DIRECCIONDELREPO

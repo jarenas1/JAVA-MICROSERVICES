@@ -10,4 +10,12 @@ public interface IProductSevice {
     List<ProductEntity> findAll();
 
     Optional<ProductEntity> findById(Long id);
+
+    //CRUD
+
+    ProductEntity save(ProductEntity productEntity);
+
+    ProductEntity update(ProductEntity productEntity, Long id);
+
+    void deleteById(Long id);
 }
