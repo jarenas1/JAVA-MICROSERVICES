@@ -2,6 +2,7 @@ package com.microservices.items.msvc_items.services;
 
 import com.microservices.items.msvc_items.clients.ProductFeignClient;
 import com.microservices.items.msvc_items.entities.ItemEntity;
+import com.microservices.items.msvc_items.entities.ProductDto;
 import feign.FeignException;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-@Primary
+
 @Service
 public class ItemServiceFeign implements IItemService {
 
@@ -36,5 +37,20 @@ public class ItemServiceFeign implements IItemService {
 //        } catch(FeignException e){
 //            return Optional.empty();
 //        }
+    }
+
+    @Override
+    public ProductDto save(ProductDto product) {
+        return null;
+    }
+
+    @Override
+    public ProductDto update(ProductDto product, Long id) {
+        return null;
+    }
+
+    @Override
+    public void delete(Long id) {
+
     }
 }

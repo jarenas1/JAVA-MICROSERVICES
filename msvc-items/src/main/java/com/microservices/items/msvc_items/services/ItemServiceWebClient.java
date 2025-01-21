@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
+@Primary
 @Service
 public class ItemServiceWebClient implements IItemService {
 
@@ -43,5 +44,37 @@ public class ItemServiceWebClient implements IItemService {
                 .bodyToMono(ProductDto.class) //Usamos MONO YA QUESOLO SE RECIBIRA UN ELEMENTO
                 .map(product -> new ItemEntity(product, new Random().nextInt(10) + 1))
                 .block());
+    }
+
+    @Override
+    public ProductDto save(ProductDto product) {
+        return webClient.build().post().contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(product)//cuerpo de peticion
+                .retrieve() //se hace el envio de peticion
+                .bodyToMono(ProductDto.class)//Pasamos la respuesta a mono
+                .block(); //bloqueamos para devolver
+    }
+
+    @Override
+    public ProductDto update(ProductDto product, Long id) {
+        HashMap<String, Long> params = new HashMap<>();
+        params.put("id", id);
+        return webClient.build().put().uri("/{id}", params)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(product)
+                .retrieve()//envia peticion
+                .bodyToMono(ProductDto.class)//Recibe respuesta
+                .block(); //obtiene respuesta
+    }
+
+    @Override
+    public void delete(Long id) {
+        HashMap<String, Long> params = new HashMap<>();
+        params.put("id", id);
+        webClient.build().delete().uri("/{id}", params) //NO RETORNA NADA
+        .retrieve()
+        .bodyToMono(ProductDto.class)//Obtenemos respuesta
+        .block();
     }
 }
