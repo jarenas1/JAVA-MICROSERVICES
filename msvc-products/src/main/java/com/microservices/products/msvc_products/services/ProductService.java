@@ -1,6 +1,7 @@
 package com.microservices.products.msvc_products.services;
 
-import com.microservices.products.msvc_products.entities.ProductEntity;
+
+import com.juan.libs.msvc.commons.libs_msvc_commons.entities.ProductEntity;
 import com.microservices.products.msvc_products.repositories.ProductRepository;
 import jakarta.ws.rs.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;

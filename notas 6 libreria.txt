@@ -1,0 +1,50 @@
+Commons
+
+Esto se  asa en evitar repetir código, teniendo en cuenta, que ítems tiene un Productito y producto tiene ProductEntity, y que ambos tienen los mismos atributos, podemos crear una dependencia con esta clase para usarla en ambas partes
+
+Para crear esta dependencia, debemos crear un nuevo proyecto, que tenga spring data jpa
+
+1. borramos el método main debido a que nop se ejecutara
+
+2. esta clase principal, añadiremos @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class }), ESTO PARA EVITAR QUE PIDA CREDENCIALES DE BASE DE DATOS AL ARRANCAR
+
+3. creamos entities y copiamos la clase de productios dentro
+
+4. eliminamos en el pom, el ´plugin de build
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+5. Generamos un jar para poderlo añadir al proyecto 
+
+Para esto abrimos la terminal y ponemos: ./mvnw install
+
+
+AÑADIR EL PROYECTO DEPENDENCIA EN LOS OTROS
+
+1. copiar estos datos <groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.4.1</version>
+
+2. ir a cada micro servicio en el pom y añadir dependency y esto adentro
+
+3. EJEMPLO: Brrareos la clase de prouct entity
+
+4. Donde nos marque error, comenzamos simplemente a importarla 
+
+5. IMPORTANTE!! como en este ejemplo esa entidad que se cambio por la dependencia, representaba una entudad de la base de datos
+
+6 Ponemos en la clase principal algo que nos audara a coonfugurar una lista d estas dependencias 
+@EntityScan({"com.juan.libs.msvc.commons.libs_msvc_commons.entities.ProductEntity"})
+
+7 EJEMPLO: Ahora con ítems, donde este servicio no tiene base de datos, también debemos realizar la configuración creada en la dependencia quee creamos.
+Como la dependencia incluye JPA, que nos fuerza a tener base de datos, cuando implementmaos la dependencia en products no hubo problema ya que en esta si había base de datos, pero
+Ahora en ítems, como no tenemos base de datos y la dependencia si, deberemos evitar que al iniciarse se trate de configurar la base de datos.
+
+Recordar, solo se añade esto en la clase principal  @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class })
