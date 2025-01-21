@@ -123,6 +123,22 @@ public class ItemController {
             return ResponseEntity.ok(new ItemEntity(productDto, 5));
         });
     }
+
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody ProductDto productDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(itemService.save(productDto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ProductDto productDto) {
+        return ResponseEntity.status(HttpStatus.OK).body(itemService.update(productDto, id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        itemService.delete(id);
+        return ResponseEntity.ok().build();
+    }
 }
 
 

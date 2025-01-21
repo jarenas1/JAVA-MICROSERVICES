@@ -4,6 +4,7 @@ import com.microservices.items.msvc_items.clients.ProductFeignClient;
 import com.microservices.items.msvc_items.entities.ItemEntity;
 import com.microservices.items.msvc_items.entities.ProductDto;
 import feign.FeignException;
+import org.springframework.cloud.openfeign.Targeter;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +19,7 @@ public class ItemServiceFeign implements IItemService {
 
     private final ProductFeignClient productFeignClient;
 
-    public ItemServiceFeign(ProductFeignClient productFeignClient) {
+    public ItemServiceFeign(ProductFeignClient productFeignClient, Targeter feignTargeter) {
         this.productFeignClient = productFeignClient;
     }
 
@@ -41,16 +42,16 @@ public class ItemServiceFeign implements IItemService {
 
     @Override
     public ProductDto save(ProductDto product) {
-        return null;
+        return productFeignClient.create(product);
     }
 
     @Override
     public ProductDto update(ProductDto product, Long id) {
-        return null;
+        return productFeignClient.update(id, product);
     }
 
     @Override
     public void delete(Long id) {
-
+        productFeignClient.delete(id);
     }
 }

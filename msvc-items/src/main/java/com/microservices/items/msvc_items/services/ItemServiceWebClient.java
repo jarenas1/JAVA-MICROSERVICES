@@ -48,7 +48,8 @@ public class ItemServiceWebClient implements IItemService {
 
     @Override
     public ProductDto save(ProductDto product) {
-        return webClient.build().post().contentType(MediaType.APPLICATION_JSON)
+        return webClient.build().post().uri("http://msvc-products")
+                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(product)//cuerpo de peticion
                 .retrieve() //se hace el envio de peticion
                 .bodyToMono(ProductDto.class)//Pasamos la respuesta a mono
@@ -59,7 +60,7 @@ public class ItemServiceWebClient implements IItemService {
     public ProductDto update(ProductDto product, Long id) {
         HashMap<String, Long> params = new HashMap<>();
         params.put("id", id);
-        return webClient.build().put().uri("/{id}", params)
+        return webClient.build().put().uri("http://msvc-products/{id}", params)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(product)
@@ -72,9 +73,9 @@ public class ItemServiceWebClient implements IItemService {
     public void delete(Long id) {
         HashMap<String, Long> params = new HashMap<>();
         params.put("id", id);
-        webClient.build().delete().uri("/{id}", params) //NO RETORNA NADA
+        webClient.build().delete().uri("http://msvc-products/{id}", params) //NO RETORNA NADA
         .retrieve()
-        .bodyToMono(ProductDto.class)//Obtenemos respuesta
+        .toBodilessEntity() // Indica que no esperas cuerpo
         .block();
     }
 }

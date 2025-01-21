@@ -2,8 +2,7 @@ package com.microservices.items.msvc_items.clients;
 
 import com.microservices.items.msvc_items.entities.ProductDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -17,5 +16,14 @@ public interface ProductFeignClient {
 
     @GetMapping("/{id}")
     public ProductDto details(@PathVariable Long id);
+
+    @PostMapping
+    public ProductDto create(@RequestBody ProductDto productDto);
+
+    @PutMapping("/{id}")
+    public ProductDto update(@PathVariable Long id, @RequestBody ProductDto productDto);
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id);
 }
 
