@@ -7,6 +7,7 @@ import jakarta.ws.rs.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,10 +17,17 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    //PARA HASHEAR PASSWORD
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @PostMapping
     public ResponseEntity<?> createUser(@Valid @RequestBody UserEntity userEntity) {
         try {
+            //Seteamos el password encriptado
+            userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
             return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(userEntity));
+
         }catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("THE USER CANNOT BE CREATED");
         }
