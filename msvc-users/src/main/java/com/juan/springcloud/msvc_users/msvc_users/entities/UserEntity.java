@@ -4,14 +4,19 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "users")
 public class UserEntity {
 
@@ -43,5 +48,5 @@ public class UserEntity {
              //permitira que no haya un registro que repita ambas llaves
             uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"})
      )
-     List<RoleEntity> roles;
+     private List<RoleEntity> roles = new ArrayList<>();
 }

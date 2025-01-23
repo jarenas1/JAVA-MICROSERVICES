@@ -1,5 +1,6 @@
 package com.juan.springcloud.msvc_users.msvc_users.repositories;
 
+
 import com.juan.springcloud.msvc_users.msvc_users.entities.UserEntity;
 import org.springframework.data.repository.CrudRepository;
 

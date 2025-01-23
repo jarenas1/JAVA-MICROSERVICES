@@ -33,6 +33,11 @@ public class UserController {
         }
     }
 
+    @GetMapping
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(userService.findAll());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
         UserEntity userEntity = userService.findById(id).orElseThrow(()-> new NotFoundException("THE USER CANNOT BE FOUND"));
