@@ -126,9 +126,9 @@ public class SecurityConfig {
     public RegisteredClientRepository registeredClientRepository() {
         // Crea cliente registrado para OAuth
         RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                // ID del cliente (gateway)
+                // ID del cliente (gateway) SE PONE EN EL GATEWAY!!!!
                 .clientId("gateway")
-                .clientSecret("{noop}secret")
+                .clientSecret("{noop}secret") //se pasa al yml de gatway
                 // Método de autenticación del cliente
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 // Tipos de concesión de autorización

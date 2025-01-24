@@ -22,8 +22,35 @@ resilience4j:
       products:
         base-config: default
 
-
 spring:
+  ##CONFIGURACION DEL SERVIDOR DE RECURSO PARA VALIDACION DE TOKEN ETC ...
+  security:
+    oauth2:
+      # Configura el servidor de recursos para que valide los JSON Web Tokens
+      resourceserver:
+        jwt:
+          #Especifica la URI del servidor de autorización (authorization server), que es el encargado de emitir y validar los tokens.
+          issuer-uri: http://127.0.0.1:9100  #uri de servidor de autorizacion, RUTA BASICA
+          #CONFIGURACION DE CLIENTE DE OAUTH2
+      client:
+        #se registra como un cliente del servidor de autorizacion, es decir, podra obtener tokens
+        registration:
+          client-app:
+            provider: spring #nombre del prooveedor de autorizacion, puede ser cualquiera
+            client-id: gateway #ESTE ES EL ID QUE SE LE DIO EN EL SERVIDOR DE AUTORIZACION
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: http://127.0.0.1:8090/authorized #RUTA CREADA EN EL COTROLADOR DEL GATEWAY PARA RETORNAR EL TOKEN
+            scope:
+              - openid
+              - profile
+            client-name: client-app
+        provider:
+          spring:
+            issuer-uri: http://127.0.0.1:9100
+
+
+
   cloud:
     gateway:
       routes:
