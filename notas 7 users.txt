@@ -1,0 +1,54 @@
+La idea de crear un micro servicio de ítems, es que un servicio de autenticación lo pueda consumir para autenticar a los usuarios
+
+Para esto crearemos un nuevoi msvc llamado users, el cual contendrá las deoendencias: jpa, web, devtools, eureka Discovery client, MySQL
+
+Inicialmente anotaremos la clase principal cin @EnableDiscoveryClient
+
+Luego se crea el tema del crud y lógica básica
+
+Por ultimo conectamos al servidor de eureka: eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+
+
+tAMBIEN CREAREMOS UN PASSWORD ENCODER PARA GUARDAR LA CLAVE HASHEADA, PARA ESTO EN UNA CLASE ANOTADA CON @Configuration, o la clase principal, pondremos un Bean de este
+	@Bean
+	PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+
+Luego de hashear el password a la hora de guardar, lo queharemos será crear una entidad de roles para poder asignarlos
+
+Una vez creada la entidad de roles, creamos la relación entr usuarios y roles, la cual será reada desde users
+
+
+La relación será MANY TO MANY
+
+@ManyToMany
+     @JoinTable(
+             name = "users_roles",
+             joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"),
+             //permitira que no haya un registro que repita ambas llaves
+            uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"})
+     )
+     List<RoleEntity> roles;
+
+
+luego LEVANTAMOS Y DESDE MYSQL creamos el role user y el admin, tener en cuenta la convención, todo rol debe nombrarse como ROLE_name
+
+
+RECORDAR VERIFICAR AL CREAR O EDITAR UN USUARIO QUE LOS ROLES ENVIADOS EXISTAN EN LA DATABSE
+
+-- AÑADIR ESTO AL API GATEWAY
+
+        - id: msvc-users
+          uri: lb://msvc-users
+          predicates:
+            - path=/api/users/**
+          filters:
+            - StripPrefix=2
+
+
+
+
+

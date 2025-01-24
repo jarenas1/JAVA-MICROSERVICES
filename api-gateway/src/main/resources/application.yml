@@ -63,4 +63,11 @@ spring:
             - Path=/api/users/**
           filters:
             - StripPrefix=2
+            ##SEGURIDAD
+        - id: msvc-oath
+          uri: lb://msvc-oauth
+          predicates:
+            - Path=/api/security/**
+          filters:
+            - StripPrefix=2
 
