@@ -35,18 +35,20 @@ spring:
       client:
         #se registra como un cliente del servidor de autorizacion, es decir, podra obtener tokens
         registration:
-          client-app:
+          client-app: #NOMBRE QUE LE ESTAMOS DANDO A ESTE CONSUMIDOR DEL SERVER DE AUTH, SE DEBE PONER EN SUS CONFIGURACIONES
             provider: spring #nombre del prooveedor de autorizacion, puede ser cualquiera
             client-id: gateway #ESTE ES EL ID QUE SE LE DIO EN EL SERVIDOR DE AUTORIZACION
-            client-secret: secret
+            client-secret: secret #igual que lo de arriba
             authorization-grant-type: authorization_code
             redirect-uri: http://127.0.0.1:8090/authorized #RUTA CREADA EN EL COTROLADOR DEL GATEWAY PARA RETORNAR EL TOKEN
             scope:
+              ##Lo mismo qu tenemos en el servidor de autorizacion
               - openid
               - profile
             client-name: client-app
+            ##ESPECIFICAMOS CUAL ES EL PROOVEDOR DE AUTORIZACION
         provider:
-          spring:
+          spring: #NOMBRE DECLARADO ARRIBA Y RUTA DEL SERVIDOR DE AUTORIZACION
             issuer-uri: http://127.0.0.1:9100
 
 

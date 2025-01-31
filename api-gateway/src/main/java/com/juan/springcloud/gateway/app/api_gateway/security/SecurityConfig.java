@@ -3,13 +3,14 @@ package com.juan.springcloud.gateway.app.api_gateway.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
 @Configuration
 public class SecurityConfig {
 
-    @Bean
+    @Bean //SE CREO CON WEBFLUX, POR ENDE, CAMBIA ALGUNAS COSAS
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) throws Exception {
         return http.authorizeExchange(auth ->{
             auth.pathMatchers("/authorized", "/logout").permitAll()
@@ -18,7 +19,14 @@ public class SecurityConfig {
                     //protegidas
                     .pathMatchers(HttpMethod.GET, "/api/items/{id}", "/api/products/{id}", "/api/users/{id}").hasAnyRole("ADMIN", "USER")
                     //resto de rutas
-                    .pathMatchers("/api/products/**", "/api/itmes/**","/api/users/**").
-        });
+                    .pathMatchers(HttpMethod.PUT,"/api/products/**", "/api/itmes/**","/api/users/**").hasAnyRole("ADMIN")
+                    .pathMatchers(HttpMethod.POST,"/api/products/**", "/api/itmes/**","/api/users/**").hasAnyRole("ADMIN")
+                    .pathMatchers(HttpMethod.DELETE,"/api/products/**", "/api/itmes/**","/api/users/**").hasAnyRole("ADMIN")
+                    .anyExchange().authenticated();
+        }).cors(csrf -> csrf.disable())
+                .oauth2Login(withDefaults()) //RECORDAR QUE SE DEBE IMPORTAR static
+                .oauth2Client(withDefaults())
+                .oauth2ResourceServer(withDefaults())
+                .build();
     }
 }

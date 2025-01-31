@@ -1,0 +1,122 @@
+JWT: Estándar de seguridad usado en aplicaciones basadas en servicios que contiene datos no sencibles del usuario, y que puede contener roles y permisos del usuario, evitando asi evitar consultas al servidor
+
+Es staless, ya que no ma tiene una sesión en el servidor, en cada request se debe enviar el token
+
+
+
+OAUTH 2
+
+Permite a aplicafiones de trceros autenticarse con cuentas creadas en otros servicios como Google sin compartir toda la información 
+
+La implementación de esto en security se parte en 2
+
+	1. Sever de autorización:: genera la autenticación dl usuario dando un token al user para acceder a los recusrsos
+
+	2. Servidor de recurso, Administra permisos y acceso a nuestras api rest, estos request son los que llevan el token 
+
+
+
+CREACION Oauth 2.1 
+
+Crearemos el seviro de autenticación, recibimos username y password y se autenticaran, este servidor deberá comunicarse con el msvc users por medio de http 
+
+
+CREAREMOS UN PROYECTO CON: web, Discovery client securuty, authorization server oauth, webflix PARA USSAR EL WEBCLIENT
+
+luego LO CONFIGURAMOS COMO CLIENTE DE EUREKA EN LA CLASE PRINCIPAL con @EnableDiscoveryClient
+
+y también en el rpoperties eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.hostname=localhost
+eureka.instance.prefer-ip-address=true
+
+
+-- CONFIGURACION DE ESTE SERVIDOR 
+
+ver proyecto
+
+
+
+-- AÑDIR MICRO SERVICIO AL GATEWAY
+
+        - id: msvc-oath
+          uri: lb://msvc-oauth
+          predicates:
+            - Path=/api/security/**
+          filters:
+            - StripPrefix=2
+
+
+-- IMPPLEMENTAR ENDPOINTS DE AUTHORIZATION EN EL GATEWAY
+
+Nos iremos para el Gateway y crearems n controlador que en este caso se llama AppController 
+
+Crearemos dos controladores
+
+    @GetMapping("/authorized")
+    public Map<String, String> authorized(@RequestParam String code) {
+        return Collections.singletonMap("code", code);
+    }
+
+    @PostMapping("/logout")
+    public Map<String, String> logout() {
+        return Collections.singletonMap("Logout", "Ok");
+    }
+
+
+--CONFIGURACION DE RESOURCE SERVER Y OAUTHCLIENT EN GATEWAY
+
+Gateway será clinte del servidor de autenticación parra poder iniciar sesión y eso
+
+Servidor de recursos = servidor que protege llas rutas, es decir api Gateway, por lo que, el api Gateway debe verificar el otken en el servidor de autoriazion para poder dar acceso a una ruta
+
+
+Por ende, debemos añadir las siguientes dependencias al api Gateway, 1 security, 2 oauth client, o auth resource server
+
+Servidor de Autorización		Servidor de Recursos
+Gestiona la autenticación de usuarios.	Exponen los datos protegidos (recursos).
+Emite tokens de acceso y refresh.	Verifica tokens y decide si permite o no el acceso.
+Ejemplo: /authorize, /token.		Ejemplo: /api/user, /api/products.
+
+
+Flujo general con API Gateway, Servidor de Autorización y Servidor de Recursos
+API Gateway como Servidor de Recursos
+El API Gateway actúa como un punto central para manejar las solicitudes hacia los diferentes microservicios (o servidores de recursos).
+Aquí, el API Gateway también se configura como un servidor de recursos. Esto significa que:
+Validará los tokens.
+Decidirá si permite o no el acceso a los recursos protegidos.
+El Gateway interactúa con el Servidor de Autorización para verificar los tokens que recibe de los clientes.
+¿Cómo funciona este flujo?
+Usuario solicita un recurso protegido (por ejemplo, /api/products)
+
+El cliente (un navegador, una app móvil, etc.) envía la solicitud al API Gateway.
+La solicitud incluye un token de acceso (que el cliente obtuvo previamente del Servidor de Autorización).
+API Gateway valida el token con el Servidor de Autorización
+
+El Gateway está configurado como un servidor de recursos, por lo que:
+Revisa si el token es válido, verificándolo con las claves públicas del Servidor de Autorización (configurado con issuer-uri en el application.yml).
+Si el token es válido, el Gateway permite el acceso al recurso solicitado.
+API Gateway actúa como cliente OAuth2 si necesita solicitar tokens
+
+En algunos casos, el Gateway también puede comportarse como un cliente OAuth2 si necesita:
+Solicitar tokens de acceso o refresh.
+Esto es útil, por ejemplo, si el Gateway necesita comunicarse con el Servidor de Autorización en nombre de otros servicios o para realizar autenticaciones adicionales.
+API Gateway redirige a los microservicios (o servidores de recursos finales)
+
+Si la validación del token es exitosa, el API Gateway pasa la solicitud al microservicio correspondiente.
+Los microservicios pueden confiar en que el Gateway ya validó el token y procesan la solicitud.
+
+
+EN EL GATWAY, EN EL YML, SE CONFIGURARA:
+
+EL GATWAY COMO ZSERVIDOR DE RECURSOS(valida token y da acceso a recursos) cliente de oauth
+
+
+
+-- Configuración de rutas en el api Gateway:
+
+
+vamos a crear un securityConfigu para configurar todo:
+
+1. anotamos con security config
+
+2. cramos el filter chain para verificar permisos y accesos a recursos

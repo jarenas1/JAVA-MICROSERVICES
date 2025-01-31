@@ -100,7 +100,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 //  // Configuración de autorización para solicitudes HTTP
+                .csrf(csrf -> csrf.disable())
                 .formLogin(Customizer.withDefaults());
+
         // Construye y retorna la cadena de filtros de seguridad
         return http.build();
     }
@@ -109,12 +111,12 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService() {
         UserDetails userDetails = User.builder()
                 .username("user")
-                .password("password")
+                .password("{noop}password")
                 .roles("USER")
                 .build();
         UserDetails admin = User.builder()
                 .username("admin")
-                .password("password")
+                .password("{noop}password")
                 .roles("USER", "ADMIN")
                 .build();
 
@@ -134,9 +136,9 @@ public class SecurityConfig {
                 // Tipos de concesión de autorización
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                //PROTEGEREMOS GATEWAY YA QUE ES LA ENTRADA DE TODOS
-                .redirectUri("http://127.0.0.1:8090/login/oauth2/code/gateway")
-                .redirectUri("http://127.0.0.1:8090/authorized")
+                //PROTEGEREMOS GATEWAY YA QUE ES LA ENTRADA DE TODOS, estos datos van en el yml
+                .redirectUri("http://127.0.0.1:8090/login/oauth2/code/client-app") //client-app ES EL NOMBRE DEL CLIENTE
+                .redirectUri("http://127.0.0.1:8090/authorized") //ENDPOINTS 
                 .postLogoutRedirectUri("http://127.0.0.1:8090/logout")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE) //MARCAR ABAJO COMO FALSE
