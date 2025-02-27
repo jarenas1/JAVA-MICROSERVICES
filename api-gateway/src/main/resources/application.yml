@@ -33,7 +33,7 @@ spring:
           issuer-uri: http://127.0.0.1:9100  #uri de servidor de autorizacion, RUTA BASICA
           #CONFIGURACION DE CLIENTE DE OAUTH2
       client:
-        #se registra como un cliente del servidor de autorizacion, es decir, podra obtener tokens
+        #se registra como un cliente del servidor de autorizacion, es decir, para que los usuarios se logeen mediante este
         registration:
           client-app: #NOMBRE QUE LE ESTAMOS DANDO A ESTE CONSUMIDOR DEL SERVER DE AUTH, SE DEBE PONER EN SUS CONFIGURACIONES
             provider: spring #nombre del prooveedor de autorizacion, puede ser cualquiera
@@ -69,7 +69,7 @@ spring:
             - name: CircuitBreaker #PARA PODER HACER QUE LANCE LOS ERRORES POR MEDIO DE EXCEPCIONES DEBEMOS INIDCAR QUE TIPO DE ERORES VA A RECIBIR ACA
               args:
                 name: products #NOMBRE DEL SERVICIO
-                statusCodes: 500, 404 #ETC ...
+                statusCodes: 500, 404, 502, 503, 504
                 # SI FALLA ALGO REDIRIGIMOS A UNA URI
                 fallbackUri: forward:/api/items/5
 #            - name: SampleCookie

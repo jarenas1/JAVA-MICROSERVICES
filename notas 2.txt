@@ -29,3 +29,10 @@ Añadimos una dependencia que indica que serán clientes de un servidor de eurek
 
 Luego en cada servicio, debemos en el properties, añadir donde estará el servidor del cual será cliente, se hace con el siguiente comando eureka.client.service-url.defaultZone=http://localhost:8761/eureka
 CUANDO DESEEMOS LEVANTAR ALGO, DEBE ESTAR LEVANTADO EL SERVIDOR DE EUREKA
+
+
+EL CLIENTE DEBE LLEVAR TAMBIEN LA SIGUIENTE DEPENDENCIA 
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
