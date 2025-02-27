@@ -42,9 +42,11 @@ spring:
             authorization-grant-type: authorization_code
             redirect-uri: http://127.0.0.1:8090/authorized #RUTA CREADA EN EL COTROLADOR DEL GATEWAY PARA RETORNAR EL TOKEN
             scope:
-              ##Lo mismo qu tenemos en el servidor de autorizacion
+              ##Lo mismo qu tenemos en el servidor de autorizacion SON LOS ROLES
               - openid
               - profile
+              - write
+              - read
             client-name: client-app
             ##ESPECIFICAMOS CUAL ES EL PROOVEDOR DE AUTORIZACION
         provider:

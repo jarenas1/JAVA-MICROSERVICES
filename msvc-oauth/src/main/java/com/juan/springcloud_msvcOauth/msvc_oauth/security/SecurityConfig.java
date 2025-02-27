@@ -140,7 +140,9 @@ public class SecurityConfig {
                 .redirectUri("http://127.0.0.1:8090/login/oauth2/code/client-app") //client-app ES EL NOMBRE DEL CLIENTE
                 .redirectUri("http://127.0.0.1:8090/authorized") //ENDPOINTS 
                 .postLogoutRedirectUri("http://127.0.0.1:8090/logout")
-                .scope(OidcScopes.OPENID)
+                .scope(OidcScopes.OPENID)//ROLES
+                .scope("write")
+                .scope("read")
                 .scope(OidcScopes.PROFILE) //MARCAR ABAJO COMO FALSE
                 .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
                 .build();
