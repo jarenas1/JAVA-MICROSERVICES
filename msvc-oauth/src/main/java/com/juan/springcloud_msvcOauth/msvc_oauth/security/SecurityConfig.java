@@ -13,6 +13,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -25,6 +26,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -48,6 +50,9 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 @Configuration
 public class SecurityConfig {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Bean
     @Order(1)
@@ -114,22 +119,22 @@ public class SecurityConfig {
         // Construye y retorna la cadena de filtros de seguridad
         return http.build();
     }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails userDetails = User.builder()
-                .username("user")
-                .password("{noop}password")
-                .roles("USER")
-                .build();
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password("{noop}password")
-                .roles("USER", "ADMIN")
-                .build();
-
-        return new InMemoryUserDetailsManager(userDetails, admin);
-    }
+//    COMENTAMOS PARA USAR USUARIOOS DE BASE DE DATOS
+//    @Bean
+//    public UserDetailsService userDetailsService() {
+//        UserDetails userDetails = User.builder()
+//                .username("user")
+//                .password("{noop}password")
+//                .roles("USER")
+//                .build();
+//        UserDetails admin = User.builder()
+//                .username("admin")
+//                .password("{noop}password")
+//                .roles("USER", "ADMIN")
+//                .build();
+//
+//        return new InMemoryUserDetailsManager(userDetails, admin);
+//    }
 
     @Bean
     //CLIENTE: Aplicación que solicita autorización solo desarrollo
@@ -138,7 +143,8 @@ public class SecurityConfig {
         RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 // ID del cliente (gateway) SE PONE EN EL GATEWAY!!!!
                 .clientId("gateway")
-                .clientSecret("{noop}secret") //se pasa al yml de gatway
+                .clientSecret(passwordEncoder.encode("secret")) //ENCRIPTO
+//                .clientSecret("{noop}secret") //se pasa al yml de gatway
                 // Método de autenticación del cliente
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 // Tipos de concesión de autorización
