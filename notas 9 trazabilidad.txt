@@ -1,0 +1,42 @@
+TRAZABILIDAD DISTRIBUIDA 
+
+SPRING CLOUD SLEUTH: Es una dependencia que provee una solución de trazado distribuido, SE DEBE AÑADIR EN CADA MICRO SERVICIO
+
+
+Prmite identidicar la petición de un micro servicio como un todo, es decir, sigue la petición d un micro servicio que llama a otros micro servicios
+
+
+ESTE TIENE:
+
+TraceId: Identificador asociado a la petición que viaja entre los msvc
+
+spanid: identificador de trabajo de cafda llamada a un micro servicio
+
+
+Atributos Annottion
+
+Miden tiempos de entrada y de salid de cada petición y salud de los msvc
+
+cs(Client Sent): cliente envia petición
+
+sr(Server Recived) El servidor resive la petición deñ usuario
+	Podemos obtener la latencia con esto<: tiempo_sr tiempo_cs = latencia
+
+ss(server sent) La respuesta que envia el servidor al cliente
+	Podemos obtener el tiempo de procesamiento de la petición:  tiempo_ss - tiempo_sr = tiempo de procesamiento
+
+cr(Client recivd) el cliente recibe respuesta del servidor:
+	tiempo_cr - tiempo_cs = TOTAL TIME TRAZA
+
+
+
+
+zipink|
+
+Sirve para mostrar todo lo de sleuth, mostrándonos las trazas y todo sto
+
+El flujo es:
+
+Creamos el servidor de Zipkin -> Marcamos nuestros msvc con sleuth como clientes
+
+Le servidor recibirá la data y la enviara a una base de datos que configuremos y la mosrara en Ziplkin UI

@@ -48,6 +48,8 @@ ver proyecto
 
 -- IMPPLEMENTAR ENDPOINTS DE AUTHORIZATION EN EL GATEWAY
 
+Esto se hace ya que se registrara el api Gateway como un cliente de nuestro sercidor de autenticación y como nuestro servidor de rutas(ver yml), por ende, como este será un recurso que protejera el servidor de autenticación, debemos implementar los endpints designados en registredClientRepository()
+
 Nos iremos para el Gateway y crearems n controlador que en este caso se llama AppController 
 
 Crearemos dos controladores
@@ -67,7 +69,7 @@ Crearemos dos controladores
 
 Gateway será clinte del servidor de autenticación parra poder iniciar sesión y eso
 
-Servidor de recursos = servidor que protege llas rutas, es decir api Gateway, por lo que, el api Gateway debe verificar el otken en el servidor de autoriazion para poder dar acceso a una ruta
+Servidor de recursos = servidor que protege llas rutas, es decir api Gateway, por lo que, el api Gateway debe verificar el totken en el servidor de autoriazion para poder dar acceso a una ruta
 
 
 Por ende, debemos añadir las siguientes dependencias al api Gateway, 1 security, 2 oauth client, o auth resource server
@@ -112,11 +114,199 @@ EL GATWAY COMO ZSERVIDOR DE RECURSOS(valida token y da acceso a recursos) client
 
 
 
--- Configuración de rutas en el api Gateway:
+-- Configuración de rutas en el api Gateway (servidor de recursos)
 
 
 vamos a crear un securityConfigu para configurar todo:
 
 1. anotamos con security config
 
-2. cramos el filter chain para verificar permisos y accesos a recursos
+2. cramos el filter chain para verificar permisos y accesos a recursos, ESTE FILTERCHAIN SE CREA CON WEBFLUX, POR ENDE CAMBIA EN ALGUNAS COSAS
+
+
+-- prueba en postman
+
+
+Al hacer un get a esto http://127.0.0.1:8090/login/oauth2/code/client-app obtendremos la ruta de un formulario
+
+http://127.0.0.1:8090/oauth2/authorization/client-app
+
+este formulario nos dará los campos para hacer login
+
+Para hacer login debemos acceder al servidor de autorización
+
+http://127.0.0.1:9100/login con los datos requeridos
+
+Este formulario al mandar las credenciales correctas nos devolverá un code 
+
+Este code lo debemos cambiar por un token para esto haremos un post a http://127.0.0.1:9100/oauth2/token
+
+Y le mandamos en body, al igual que arriba el user name el password por medio de body -> x-wwwform-urlcoded
+
+pero en este caso enviaremos:
+
+Code recibido /grant_type : authorization_code  / redirect-uri: http://127.0.0.1:8090/authorized RUTA DELCARADA EN EL GATEWAY YML
+
+Para finalizar, debemos ir a basic auth y poner username(el id) y contraseña del cliente del servidor de autorización puestas en el servidor de autorización
+
+
+PROBLEMA CON ROLES
+Este oken obtenido contiene en los claims los cuales son los roles, pero no los roles del usuario si no los roles del cliente del servidor de autorizacion
+
+
+
+-- ROLES:
+
+Este token que se nos devuelve no contiene los roles del usuario, si no que devuelve estos - openid
+              - profile
+Por ende deberemos configurar estos 
+
+Para configurarlos, debemos ¿ir al yml del Gateway y en la parte de scope (scope se trata como si fuera roles), añadimos los permisos deseados
+
+            scope:
+              ##Lo mismo quE tenemos en el servidor de autorizacion SON LOS ROLES
+              - openid
+              - profile
+              - write
+              - read
+
+
+Luego vamos al servidor de auth y hacemos lo mismo en la pare de registrar cliente y añadimos .scope con el nombre de los permisos
+
+
+Luego vamos a la configuración del servidor de recursos, en este caso el Gateway y en el security config, añadiremos estos oermisos en los endpoints como sea necesario, pero se añaden así: SCOPE_NombrePermiso y recordar usar el hasAthority y no el hasRole
+
+
+
+LA SOLUCION ANTERIOR NO ES BUENA, DEBIDO A QUE SON PERMISOS QUE SE ESTAN QUEMANDO, LO QUE DEBEMOS HACER ES CONFIGURAR LOS ROLES NO PERMISOS, EN LOS CLAIMS DEL TOKEN, LA ANTERIOR FORMA AÑADE PERMISOS AL CLIENTE DEL SERVIDOR DE AUTHORIZACION, POR ENDE TODOS LOS USUARIOS DE ESTE LO TENDRÁN
+
+
+cada vez que se vuelva a levantar la aplicación antes se deben borrar las cookies del postman
+
+
+
+CONFIGURACION DE ROLES EN EL TOKEN
+
+Vamos a la configuración del servidor de autorización y añadimos un vean
+
+    @Bean
+    OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
+        return context -> {
+            //VERIFICAMOS QUE EL TOKEN SEA EL DE ACCESO, NO EL DE REFRESH
+            if (context.getTokenType().getValue() == OAuth2TokenType.ACCESS_TOKEN.getValue()) {
+                //oBTENGO EL USUARIO
+                Authentication principal = context.getPrincipal();
+                //A{adimos a los claims los roles HACIENDO EL CAST YA QUE VIENEN COMO grathedAut.. y necesito string                context.getClaims().claim("roles", principal.getAuthorities()
+                        .stream().
+                        map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toList()));
+            }
+        };
+    }
+
+
+EN este vean también podemos añadir los claims que deseemos 
+
+
+LUEGO vamos a la configuración de seguridad del servidor de recursos, en este caso el Gateway, Diremos que se manejara la autenticación por medio de los tokens que añadimos
+
+//CON LOS PERMISOS DEL CLIENTE DEL SERVIDOR DE AUTORIZACIOJN
+//                .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
+                //con permisos del token puestos por nosotros
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtSpec -> {
+                    jwtSpec.jwtAuthenticationConverter(new Converter<Jwt, Mono<AbstractAuthenticationToken>>() {
+                        @Override
+                        public Mono<AbstractAuthenticationToken> convert(Jwt source) {
+                            //OBTENEMOS LOS ROLES
+                            Collection<String> rolesString = source.getClaimAsStringList("roles");
+                            //CASTEO A GRATHEDAUTH..
+                            Collection<GrantedAuthority> authorities = rolesString.stream().map(role ->
+                                    new SimpleGrantedAuthority(role))
+                                    .collect(Collectors.toList());
+                            return Mono.just(new JwtAuthenticationToken(source, authorities));
+                        }
+                    });
+                }))
+
+
+
+IMPLEMENTACION DE SISTEMA DE USUARIOS
+
+Lo anterior se encontrabaja siendo manejadop por medio de los usuarios que se estaba creando por medio de un vean en la configuración del servidor de authorizacion
+
+Vamos al micro servicio de ouath y CREAMOS UNA CLASE LLAMADA appConfig
+la anotamos con @Configutration y creamos 2 beans, uno para el password encoder y un webclient para obtener los usuarios
+
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    @LoadBalanced
+    WebClient.Builder webClientBuilder() {
+        return WebClient.builder().baseUrl("http://msvc-users");
+    }
+
+
+Luego vamod a la configuración de seguridad del servidor de auth e inyectamos el password encopder y lo implementamos en todas las contraseñas que tenemos, por ejemplo en la de los clientes del servidor
+
+                .clientSecret(passwordEncoder.encode("secret")) //ENCRIPTO
+//                .clientSecret("{noop}secret") //se pasa al yml de gatway
+
+
+Luego crearemos la clase USERDETAILSSERVISE que implementa la interfaz UserDetailsService e inyectamos el web client 
+
+CREAREMOS 2 MODELOS, UNO PARA LOS USUARIOS Y UNO PARA LOS ROLES, PARA USAR EL WEB CLIENT, ESTOS SERAN IGUALES A LOS DEL msvc-users (QUITANDO LAS ANOTACIONES DE PERSISTENCIA Y ESO)
+
+
+Luego en nuestro user details service, en el método loadByUsername, que es uno que nos implementa la interfaz, Realizaremos lo siguiente:
+
+Try catch, 
+
+luego realizaremos la petición del usuario por medio del username y se guardara en un User que creamos en modelos, 
+
+Luego pasaremos los roles a una lista de tipo Grathed autorities.
+
+ Y para finalizar crearemos un User de spring Security y le pasaremos el username, el password y los roles para retornarlo:
+
+
+ @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Map<String, String> params = new HashMap<>();
+        params.put("username", username);
+        try{
+            //Treaemos el usuario del controlador de usuarios
+            User user = client.build().get().uri("/username/{username}", params)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToMono(User.class)
+                    .block();
+            //traeremos los roles y cambiaremos su tipo al GrathedAuthorities
+            List<GrantedAuthority> roles = user.getRoles().stream()
+                    .map(role -> {
+                 return new SimpleGrantedAuthority(role.getName());
+            }).collect(Collectors.toList());
+            //RETORNAREMOS UN USUARIO DE SPRING SECURITY
+            return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), roles);
+        }catch(WebClientResponseException e){
+            throw new UsernameNotFoundException("we cant found the user: "+username);
+        }
+    }
+
+
+	TIEMPO DE VIDA DEL TOKEN
+vamos AL oauth y a la configuración de seguridad, específicamente al vean donde se configurna los clientes, y añadimos. 
+
+
+.tokenSettings(TokenSettings.builder()
+                        .accessTokenTimeToLive(Duration.ofHours(3)) //tiempo de vida del token
+                        .refreshTokenTimeToLive(Duration.ofHours(6)) //Sirve para refrescar el acces token
+                        .build())
+                .build();
+
+
+
+
+PASAR EL GATEWAY DE REACTIVE A MVC:
