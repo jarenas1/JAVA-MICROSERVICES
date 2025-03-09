@@ -1,6 +1,6 @@
 Commons
 
-Esto se  asa en evitar repetir código, teniendo en cuenta, que ítems tiene un Productito y producto tiene ProductEntity, y que ambos tienen los mismos atributos, podemos crear una dependencia con esta clase para usarla en ambas partes
+Esto se  basa en evitar repetir código, teniendo en cuenta, que ítems tiene un Productito y producto tiene ProductEntity, y que ambos tienen los mismos atributos, podemos crear una dependencia con esta clase para usarla en ambas partes
 
 Para crear esta dependencia, debemos crear un nuevo proyecto, que tenga spring data jpa
 

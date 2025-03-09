@@ -17,13 +17,18 @@ import java.util.Random;
 @Service
 public class ItemServiceWebClient implements IItemService {
 
+//    @Autowired
+//    private WebClient.Builder webClient;
+
+    //SE MANEJA ASI AHORA POR LA CONFIGURACION PARA MANEJAR TRAZAS
     @Autowired
-    private WebClient.Builder webClient;
+    private WebClient webClient;
 
 
+    //BORRAREMOS DE TODOS LOS METODOS EL .BUILD()
     @Override
     public List<ItemEntity> findAll() {
-        return webClient.build().get().uri("http://msvc-products") //EN VEZ DE UNA URL USAMOS LOS NOBRES DEL BALANCEO DE CARGA DEL PROPETIES
+        return webClient.get().uri("http://msvc-products") //EN VEZ DE UNA URL USAMOS LOS NOBRES DEL BALANCEO DE CARGA DEL PROPETIES
                 .accept(MediaType.APPLICATION_JSON) //RECIBIMOS SOLO RESPUESTAS JSON
                 .retrieve() //LO TRANFORMAMOS
                 .bodyToFlux(ProductDto.class) //LE DAMOS EL TIPO DE DATO
@@ -38,7 +43,9 @@ public class ItemServiceWebClient implements IItemService {
         HashMap<String, Long> params = new HashMap<>();
         params.put("id", id);
 
-        return Optional.ofNullable(webClient.build().get().uri("http://msvc-products/{id}", params)
+//        return Optional.ofNullable(webClient.build().get().uri("http://msvc-products/{id}", params)
+        //BORRAMOS EL .BUILD()
+        return Optional.ofNullable(webClient.get().uri("http://msvc-products/{id}", params)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(ProductDto.class) //Usamos MONO YA QUESOLO SE RECIBIRA UN ELEMENTO
@@ -48,7 +55,7 @@ public class ItemServiceWebClient implements IItemService {
 
     @Override
     public ProductDto save(ProductDto product) {
-        return webClient.build().post().uri("http://msvc-products")
+        return webClient.post().uri("http://msvc-products")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(product)//cuerpo de peticion
                 .retrieve() //se hace el envio de peticion
@@ -60,7 +67,7 @@ public class ItemServiceWebClient implements IItemService {
     public ProductDto update(ProductDto product, Long id) {
         HashMap<String, Long> params = new HashMap<>();
         params.put("id", id);
-        return webClient.build().put().uri("http://msvc-products/{id}", params)
+        return webClient.put().uri("http://msvc-products/{id}", params)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(product)
@@ -73,7 +80,7 @@ public class ItemServiceWebClient implements IItemService {
     public void delete(Long id) {
         HashMap<String, Long> params = new HashMap<>();
         params.put("id", id);
-        webClient.build().delete().uri("http://msvc-products/{id}", params) //NO RETORNA NADA
+        webClient.delete().uri("http://msvc-products/{id}", params) //NO RETORNA NADA
         .retrieve()
         .toBodilessEntity() // Indica que no esperas cuerpo
         .block();

@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
 
     @Autowired
-    private WebClient.Builder client;
+    private WebClient client;
 
     private final Logger logger = LoggerFactory.getLogger(UserDetailsService.class);
 
@@ -33,7 +33,7 @@ public class UserDetailsService implements org.springframework.security.core.use
         params.put("username", username);
         try{
             //Treaemos el usuario del controlador de usuarios
-            User user = client.build().get().uri("/username/{username}", params)
+            User user = client.get().uri("/username/{username}", params)
                     .accept(MediaType.APPLICATION_JSON)
                     .retrieve()
                     .bodyToMono(User.class)

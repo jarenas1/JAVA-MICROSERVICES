@@ -46,7 +46,7 @@ spring:
               - openid
               - profile
 #              - write
-#              - read
+#              - rea d
             client-name: client-app
             ##ESPECIFICAMOS CUAL ES EL PROOVEDOR DE AUTORIZACION
         provider:

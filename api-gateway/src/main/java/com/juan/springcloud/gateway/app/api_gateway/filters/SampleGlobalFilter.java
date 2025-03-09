@@ -22,10 +22,10 @@ public class SampleGlobalFilter implements GlobalFilter, Ordered {
 
     @Override //exchange maneja request y response, chain es la cadena de filtros, mono es un objeto rectivo, flux son varios
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        logger.info("Global filter executing PRE...");
+        logger.info("Global filter executing PRE gateway...");
         exchange.getRequest().mutate().headers(h -> h.add("token","5k4lel")); //el mutate simepre debe ir ya que el exange es inmutable, SE HCE PORQUE ESTAMOS TOCANDO REQUEST Y NO RESPONSE
         return chain.filter(exchange).then(Mono.fromRunnable(()->{
-            logger.info("Global filter executing POST...");
+            logger.info("Global filter executing POST gateway...");
             String token = exchange.getRequest().getHeaders().getFirst("token");
             logger.info("token " + token);
 

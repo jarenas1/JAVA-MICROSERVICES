@@ -1,7 +1,8 @@
 package com.microservices.products.msvc_products.controllers;
 
-import com.juan.libs.msvc.commons.libs_msvc_commons.entities.ProductEntity;
 
+
+import com.juan.libs.msvc.commons.libs_msvc_commons.entities.ProductEntity;
 import com.microservices.products.msvc_products.services.ProductService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

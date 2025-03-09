@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 @SpringBootApplication
 //entidades que se traen de dependencia
-@EntityScan({"com.juan.libs.msvc.commons.libs_msvc_commons.entities.ProductEntity"})
+@EntityScan(basePackages = {"com.juan.libs.msvc.commons.libs_msvc_commons.entities"})
 public class MsvcProductsApplication {
 
 	public static void main(String[] args) {

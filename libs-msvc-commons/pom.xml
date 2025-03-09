@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.juan.libs.msvc.commons</groupId>
 	<artifactId>libs-msvc-commons</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.9.1-SNAPSHOT</version>
 	<name>libs-msvc-commons</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
