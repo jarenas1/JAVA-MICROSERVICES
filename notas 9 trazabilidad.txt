@@ -10,7 +10,7 @@ ESTE TIENE:
 
 TraceId: Identificador asociado a la petición que viaja entre los msvc
 
-spanid: identificador de trabajo de cafda llamada a un micro servicio
+spanid: identificador de trabajo de cafda llamada a un micro servicio(UNICO DE UN MICRO SERVICIO)
 
 
 Atributos Annottion
@@ -40,3 +40,58 @@ El flujo es:
 Creamos el servidor de Zipkin -> Marcamos nuestros msvc con sleuth como clientes
 
 Le servidor recibirá la data y la enviara a una base de datos que configuremos y la mosrara en Ziplkin UI
+
+
+
+iNSTALANDO MICROMETER(sLUTH)
+
+vamos  a la documentación: https://docs.micrometer.io/tracing/reference/
+
+
+Añadiremos la dependencia en los micro servicios deseados 
+
+Este en el dependencyManager
+ <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bom</artifactId>
+            <version>${micrometer-tracing.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+
+ESTE NORMAL
+ <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-tracing</artifactId>
+    </dependency>
+
+
+Y añadimos <micrometer-tracing.version>1.3.3</micrometer-tracing.version> en el pom en propertires al lado de la versión de java
+
+
+Ahora debemos añadir al pom las implementaciones de los trqacers 
+
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing-bridge-brave</artifactId>
+</dependency>
+
+
+OOOO este otro
+
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing-bridge-otel</artifactId>
+</dependency>
+
+
+
+-- NOTA SUPER IMPORTANTE:
+
+Para trabajar con zinkin el servidor que muestra todas las estadísticas, debemos tener la DEPENDENCIA DE ACTUATOR
+
+
+AÑADIREMOS LA CONFIGURACION DE CADA MSVC EN EL PROPERTIES 
+
+#CONFIGURACION DE MICROMETER
+management.tracing.sampling.probability=1.0

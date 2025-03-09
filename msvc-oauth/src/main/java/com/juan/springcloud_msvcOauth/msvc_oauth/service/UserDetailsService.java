@@ -1,6 +1,8 @@
 package com.juan.springcloud_msvcOauth.msvc_oauth.service;
 
 import com.juan.springcloud_msvcOauth.msvc_oauth.models.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,8 +24,11 @@ public class UserDetailsService implements org.springframework.security.core.use
     @Autowired
     private WebClient.Builder client;
 
+    private final Logger logger = LoggerFactory.getLogger(UserDetailsService.class);
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        logger.info("Initialazing loggin process userDetailsService::loadByUsername() {}", username);
         Map<String, String> params = new HashMap<>();
         params.put("username", username);
         try{
@@ -39,8 +44,10 @@ public class UserDetailsService implements org.springframework.security.core.use
                  return new SimpleGrantedAuthority(role.getName());
             }).collect(Collectors.toList());
             //RETORNAREMOS UN USUARIO DE SPRING SECURITY
+            logger.info("Succesfully get user with username:  {} in userDetailsService::LoadByUsername", username);
             return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), roles);
         }catch(WebClientResponseException e){
+            logger.error("cant found the user with username:  {} in userDetailsService::LoadByUsername", username);
             throw new UsernameNotFoundException("we cant found the user: "+username);
         }
     }

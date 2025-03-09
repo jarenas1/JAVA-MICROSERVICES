@@ -6,6 +6,8 @@ import com.microservices.items.msvc_items.services.IItemService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
@@ -27,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 @RestController
 public class ItemController {
 
+    private final Logger logger = LoggerFactory.getLogger(ItemController.class);
+
     //PRUEBA DE SERVIDOR DE CONFIGURACION
     @Value("${configuration.texto}")
     private String text;
@@ -47,8 +51,9 @@ public class ItemController {
     @GetMapping
     public List<ItemEntity>gettItems(@RequestParam(name ="name", required = false)String name,
                                      @RequestHeader(name ="token-request", required = false)String tokenRequest) {
-        System.out.println(name);
-        System.out.println(tokenRequest);
+       logger.info("Request marameter: {}", name);
+        logger.info("Calling GetItems in item controller");
+        logger.info("token: {}", tokenRequest);
         return itemService.findAll();
     }
 
@@ -126,11 +131,13 @@ public class ItemController {
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody ProductDto productDto) {
+        logger.info("Product created: {}", productDto );
         return ResponseEntity.status(HttpStatus.CREATED).body(itemService.save(productDto));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ProductDto productDto) {
+        logger.info("Product updated: {}", productDto );
         return ResponseEntity.status(HttpStatus.OK).body(itemService.update(productDto, id));
     }
 
