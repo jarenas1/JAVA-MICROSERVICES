@@ -35,7 +35,8 @@ public class SecurityConfig {
                     .pathMatchers(HttpMethod.GET, "/api/items/{id}", "/api/products/{id}", "/api/users/{id}").hasAnyRole("ADMIN", "USER")
                     //resto de rutas
                     .pathMatchers(HttpMethod.PUT,"/api/products/**", "/api/items/**","/api/users/**").hasAnyRole("ADMIN")
-                    .pathMatchers(HttpMethod.POST,"/api/products/**", "/api/items/**","/api/users/**").hasAnyRole("ADMIN")
+//                    .pathMatchers(HttpMethod.POST,"/api/products/**", "/api/items/**","/api/users/**").hasAnyRole("ADMIN")
+                    .pathMatchers(HttpMethod.POST,"/api/products/**", "/api/items/**","/api/users/**").permitAll()
                     .pathMatchers(HttpMethod.DELETE,"/api/products/**", "/api/items/**","/api/users/**").hasAnyRole("ADMIN")
                     .anyExchange().authenticated();
         }).cors(csrf -> csrf.disable())

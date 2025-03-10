@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-@Primary
+
 @Service
 public class ItemServiceWebClient implements IItemService {
 

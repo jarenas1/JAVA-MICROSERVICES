@@ -1,6 +1,7 @@
 package com.juan.springcloud_msvcOauth.msvc_oauth.service;
 
 import com.juan.springcloud_msvcOauth.msvc_oauth.models.User;
+import io.micrometer.tracing.Tracer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class UserDetailsService implements org.springframework.security.core.use
     @Autowired
     private WebClient client;
 
+    @Autowired
+    private Tracer tracer;
+
     private final Logger logger = LoggerFactory.getLogger(UserDetailsService.class);
 
     @Override
@@ -45,9 +49,11 @@ public class UserDetailsService implements org.springframework.security.core.use
             }).collect(Collectors.toList());
             //RETORNAREMOS UN USUARIO DE SPRING SECURITY
             logger.info("Succesfully get user with username:  {} in userDetailsService::LoadByUsername", username);
+            tracer.currentSpan().tag("user", username);
             return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), roles);
         }catch(WebClientResponseException e){
             logger.error("cant found the user with username:  {} in userDetailsService::LoadByUsername", username);
+            tracer.currentSpan().tag("Error message", e.getMessage());
             throw new UsernameNotFoundException("we cant found the user: "+username);
         }
     }

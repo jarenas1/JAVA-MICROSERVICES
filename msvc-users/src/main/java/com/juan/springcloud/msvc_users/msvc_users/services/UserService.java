@@ -4,6 +4,7 @@ import com.juan.springcloud.msvc_users.msvc_users.entities.RoleEntity;
 import com.juan.springcloud.msvc_users.msvc_users.entities.UserEntity;
 import com.juan.springcloud.msvc_users.msvc_users.repositories.RoleRepository;
 import com.juan.springcloud.msvc_users.msvc_users.repositories.UserRepository;
+import io.micrometer.tracing.Tracer;
 import jakarta.ws.rs.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,9 @@ public class UserService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private Tracer tracer;
 
     @Transactional
     public UserEntity save(UserEntity userEntity) {

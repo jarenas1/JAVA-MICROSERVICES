@@ -21,9 +21,13 @@ public class AppConfig {
 //    WebClient.Builder webClientBuilder() {
 //        return WebClient.builder().baseUrl("http://msvc-users");
 //    }
-    @Bean //COMPATIBLE CON LAS TRAZAS
-    WebClient WebClient(WebClient.Builder WCbuilder, ReactorLoadBalancerExchangeFilterFunction lbFunction) { //Pasamos un wc, el cual es creado por spring, por ende contiene todo el contexto de la traza
-        return WCbuilder.baseUrl("http://msvc-users").build();
-    }
+@Bean //COMPATIBLE CON LAS TRAZAS
+WebClient webClient(WebClient.Builder builder, ReactorLoadBalancerExchangeFilterFunction lbFunction) {
+    return builder
+            .baseUrl("http://msvc-users")
+            .filter(lbFunction)
+            .build();
+}
+
 
 }

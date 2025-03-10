@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-
+@Primary
 @Service
 public class ItemServiceFeign implements IItemService {
 

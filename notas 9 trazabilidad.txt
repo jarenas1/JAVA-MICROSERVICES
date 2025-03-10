@@ -95,3 +95,144 @@ AÑADIREMOS LA CONFIGURACION DE CADA MSVC EN EL PROPERTIES
 
 #CONFIGURACION DE MICROMETER
 management.tracing.sampling.probability=1.0
+
+AHORA AÑADIREMOS LOGS, de modo que en cada log se mostrara los traces, y se llevara como un seguimiento de todo, tener en cuenta. 
+
+Del Gateway a los micro servicios funciona todo correcto, pero por ejemplo en los micro servicios que se comunicn por http, no se seguitra la traza, debemos indicar esto en el feign o web client
+
+SOLUCION:
+
+WEBCLIENT:
+	
+1. Modificamos el vean configuración     //PARA CONTINUAR CON EL CONTEXTO DE LA TRAZA
+   @Bean //COMPATIBLE CON LAS TRAZAS
+WebClient webClient(WebClient.Builder builder, ReactorLoadBalancerExchangeFilterFunction lbFunction) {
+    return builder
+            .baseUrl("http://msvc-users")
+            .filter(lbFunction)
+            .build();
+}
+2. Vamod al service Y MODIFICAMOS la inyección del webClient 
+
+  //SE MANEJA ASI AHORA POR LA CONFIGURACION PARA MANEJAR TRAZAS
+    @Autowired
+    private WebClient webClient;
+
+
+Ahora iremos a cada método y borraremos el .build()
+
+
+
+FEIGN
+
+1. Añadimos la dependencia
+
+		<dependency>
+			<groupId>io.github.openfeign</groupId>
+			<artifactId>feign-micrometer</artifactId>
+		</dependency>
+
+Y yaaaaa
+
+
+CUANDO TENEMOS NUESTRA API GATEWAY, CON MVC, LOS CIRCUITS DE RESILENCE, DEBEN CONFIGURARSE DE MANERA PROGRAMATICA Y NO EN EL YML
+
+
+IMPLEMENTACION DE ZPKIN:
+
+Permitira ver gráficamente todo el tema de la trazabilidad
+
+Vamos a https://zipkin.io/pages/quickstart.html y descargamos esto https://search.maven.org/remote_content?g=io.zipkin&a=zipkin-server&v=LATEST&c=exec
+
+
+Luego e desdargarlo nos meteemos a la carpeta donde lo metimos 
+
+y hacemos java -jar zipkin-server-3.5.0-exec.jar, esto lo levantara y nois dará la ip y el puerto donde esta, para acceder desde el navegador
+
+AHORA IMPLEMENTAREMOS LAS TRAZAS PARA QUE PUEDAN SER LEIDAS DESDE EL ZIPKIN UI:
+
+Vamos a https://docs.micrometer.io/tracing/reference/reporters.html y wscogemos la dependencia que vayamos a usar dependendiendo e lo escogido inicialmene, breave o open.
+
+<dependency>
+    <groupId>io.zipkin.reporter2</groupId>
+    <artifactId>zipkin-reporter-brave</artifactId>
+</dependency>
+
+O
+
+<dependency>
+    <groupId>io.opentelemetry</groupId>
+    <artifactId>opentelemetry-exporter-zipkin</artifactId>
+</dependency>
+
+
+AÑADIR ATRIBTOS O TAGS A LAS TRAZAS:
+
+1. inyectamos Tracer de import io.micrometer.tracing.Tracer;, donde tengamos nuestros logs
+
+Ahora vamos a los logs y a bajo de este podremos lanzar un tag asi: 
+
+
+CONFIURAR MYSQL
+
+Estos "logs" no se guardan, debido a que t0do esta en memoria local , si deseamos  guardar estos los en una base de datos entonces: 
+
+CREATE TABLE IF NOT EXISTS zipkin_spans (
+  `trace_id_high` BIGINT NOT NULL DEFAULT 0 COMMENT 'If non zero, this means the trace uses 128 bit traceIds instead of 64 bit',
+  `trace_id` BIGINT NOT NULL,
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `remote_service_name` VARCHAR(255),
+  `parent_id` BIGINT,
+  `debug` BIT(1),
+  `start_ts` BIGINT COMMENT 'Span.timestamp(): epoch micros used for endTs query and to implement TTL',
+  `duration` BIGINT COMMENT 'Span.duration(): micros used for minDuration and maxDuration query',
+  PRIMARY KEY (`trace_id_high`, `trace_id`, `id`)
+) ENGINE=InnoDB ROW_FORMAT=COMPRESSED CHARACTER SET=utf8 COLLATE utf8_general_ci;
+
+ALTER TABLE zipkin_spans ADD INDEX(`trace_id_high`, `trace_id`) COMMENT 'for getTracesByIds';
+ALTER TABLE zipkin_spans ADD INDEX(`name`) COMMENT 'for getTraces and getSpanNames';
+ALTER TABLE zipkin_spans ADD INDEX(`remote_service_name`) COMMENT 'for getTraces and getRemoteServiceNames';
+ALTER TABLE zipkin_spans ADD INDEX(`start_ts`) COMMENT 'for getTraces ordering and range';
+
+CREATE TABLE IF NOT EXISTS zipkin_annotations (
+  `trace_id_high` BIGINT NOT NULL DEFAULT 0 COMMENT 'If non zero, this means the trace uses 128 bit traceIds instead of 64 bit',
+  `trace_id` BIGINT NOT NULL COMMENT 'coincides with zipkin_spans.trace_id',
+  `span_id` BIGINT NOT NULL COMMENT 'coincides with zipkin_spans.id',
+  `a_key` VARCHAR(255) NOT NULL COMMENT 'BinaryAnnotation.key or Annotation.value if type == -1',
+  `a_value` BLOB COMMENT 'BinaryAnnotation.value(), which must be smaller than 64KB',
+  `a_type` INT NOT NULL COMMENT 'BinaryAnnotation.type() or -1 if Annotation',
+  `a_timestamp` BIGINT COMMENT 'Used to implement TTL; Annotation.timestamp or zipkin_spans.timestamp',
+  `endpoint_ipv4` INT COMMENT 'Null when Binary/Annotation.endpoint is null',
+  `endpoint_ipv6` BINARY(16) COMMENT 'Null when Binary/Annotation.endpoint is null, or no IPv6 address',
+  `endpoint_port` SMALLINT COMMENT 'Null when Binary/Annotation.endpoint is null',
+  `endpoint_service_name` VARCHAR(255) COMMENT 'Null when Binary/Annotation.endpoint is null'
+) ENGINE=InnoDB ROW_FORMAT=COMPRESSED CHARACTER SET=utf8 COLLATE utf8_general_ci;
+
+ALTER TABLE zipkin_annotations ADD UNIQUE KEY(`trace_id_high`, `trace_id`, `span_id`, `a_key`, `a_timestamp`) COMMENT 'Ignore insert on duplicate';
+ALTER TABLE zipkin_annotations ADD INDEX(`trace_id_high`, `trace_id`, `span_id`) COMMENT 'for joining with zipkin_spans';
+ALTER TABLE zipkin_annotations ADD INDEX(`trace_id_high`, `trace_id`) COMMENT 'for getTraces/ByIds';
+ALTER TABLE zipkin_annotations ADD INDEX(`endpoint_service_name`) COMMENT 'for getTraces and getServiceNames';
+ALTER TABLE zipkin_annotations ADD INDEX(`a_type`) COMMENT 'for getTraces and autocomplete values';
+ALTER TABLE zipkin_annotations ADD INDEX(`a_key`) COMMENT 'for getTraces and autocomplete values';
+ALTER TABLE zipkin_annotations ADD INDEX(`trace_id`, `span_id`, `a_key`) COMMENT 'for dependencies job';
+
+CREATE TABLE IF NOT EXISTS zipkin_dependencies (
+  `day` DATE NOT NULL,
+  `parent` VARCHAR(255) NOT NULL,
+  `child` VARCHAR(255) NOT NULL,
+  `call_count` BIGINT,
+  `error_count` BIGINT,
+  PRIMARY KEY (`day`, `parent`, `child`)
+) ENGINE=InnoDB ROW_FORMAT=COMPRESSED CHARACTER SET=utf8 COLLATE utf8_general_ci;
+
+
+
+Luego creamos una data base e ingreseamos, y pegamos el script de arriba 
+
+
+Luego vamos a administración y creamos un usuario para zpkin
+
+mysql_db es el nombre de la base de datos  
+
+En la consola de la carpeta donde esta zipkin lo debemos levantar con: $ STORAGE_TYPE=mysql MYSQL_USER=urlruraqazplhpoa MYSQL_PASS=k9cljVhBmEu1yvilIPoD MYSQL_DB=bq3wnnen5rbatel2fp74 MYSQL_HOST=bq3wnnen5rbatel2fp74-mysql.services.clever-cloud.com java -jar zipkin.jar
