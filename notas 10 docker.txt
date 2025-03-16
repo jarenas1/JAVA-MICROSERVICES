@@ -1,0 +1,201 @@
+DOCKER
+
+Proveedor de contenedores, los cuales son como una maquina virtual PERO EN SI NO SON LO MISMO, DOCKER ES MAS OPTIMIZADO Y MAS PEQUEÑO 
+
+
+Crear una imagen de Docker:
+
+1. Generamos el jar para poderlo ejecutar luego en el contenedor ponemos ./mvnw package clean
+
+2. Creamos un archivo Dockerfile asi, sin exension, este se crea en la carpeta inicial del proyecto
+
+FROM amazoncorretto:17-alpine-jdk
+#CARPETA DONDE GUARDAREMOS TODO
+WORKDIR /app
+#PUERTO QUE SE EXPONE AL LEVANTAR
+EXPOSE 8888
+#AÑADIMOS EL JAR AL CONTENEDOR Y LE DAMOS UN NOMBRE
+ADD ./target/config-project-0.0.1-SNAPSHOT.jar config-server.jar
+
+#INSTRUCCIONES PARA CUANDO SE LEVANTE EL CONTENEDOR
+#LEVANTAR EL JAR
+ENTRYPOINT ["java","-jar","config-server.jar"]
+
+
+3. corremos para generar la imagen con docker build -t nameOfImage:version .
+
+ej: docker build -t config-server:v1 .
+
+4. verificamos que se creo la imagen con docker images, veremos una serie de parámetros como su id, por medio de el podrmeos eliminar la imagen etc
+
+5. creamos una red en común para levantar luestros contenedores docker network create name docker network create springcloud
+
+6. Levantamos los contenedores docker run -p 8888:8888 --name Alias --network Name ImgeName 
+
+-p es el primero es el puerto interno, es decir el puerto en el que se levantara en el contenedor y el otro es el externos es decir, en el que el contenedor se levantara en nuestro pc. -name Da como una especie de nombre de dominio.  -network es la network a la que lo añadiremos, como se creo anteriormente una, y lo ultimo es el nombre de la imagen, recordar el :versión
+
+EJ:  docker run -p 8888:8888 --name spring-config --network springcloud config-server:v1 
+
+DOCKER PS muestra contenedores en ejecucion
+
+
+
+
+DOCKER IMAGE --HELP muestra los comandos de las imágenes como borrar y eso
+
+
+
+comandos;
+
+Gestión de imágenes
+
+Copiar# Construir una imagen desde un Dockerfile
+docker build -t nombre-imagen:tag .
+
+# Listar todas las imágenes disponibles
+docker images
+
+# Eliminar una imagen
+docker rmi nombre-imagen:tag
+
+# Descargar una imagen del Docker Hub
+docker pull nombre-imagen:tag
+
+# Publicar una imagen en Docker Hub
+docker push nombre-usuario/nombre-imagen:tag
+
+-----
+
+Gestión de contenedores
+
+Copiar# Crear y ejecutar un contenedor
+docker run --name mi-contenedor -p 8080:8080 -d nombre-imagen:tag
+
+# Crear y ejecutar un contenedor con volumen montado
+docker run --name mi-app -v /ruta/local:/ruta/contenedor -p 8080:8080 -d nombre-imagen:tag
+
+# Listar contenedores en ejecución
+docker ps
+
+# Listar todos los contenedores (incluyendo los detenidos)
+docker ps -a
+
+# Detener un contenedor
+docker stop nombre-contenedor
+
+# Iniciar un contenedor detenido
+docker start nombre-contenedor
+
+# Eliminar un contenedor
+docker rm nombre-contenedor
+
+# Ver logs de un contenedor
+docker logs nombre-contenedor
+
+# Ver logs en tiempo real
+docker logs -f nombre-contenedor
+
+# Ejecutar un comando dentro de un contenedor en ejecución
+docker exec -it nombre-contenedor comando
+
+
+------------------
+
+Comandos para desarrolladores Java
+Ejemplo de Dockerfile para aplicación Java
+
+
+CopiarFROM openjdk:11-jdk
+
+WORKDIR /app
+
+COPY target/mi-aplicacion.jar /app/app.jar
+
+EXPOSE 8080
+
+CMD ["java", "-jar", "app.jar"]
+Ejecutar contenedor con aplicación Spring Boot
+
+
+# Construir imagen
+docker build -t mi-app-spring:1.0 .
+
+# Ejecutar contenedor
+docker run --name mi-spring-app -p 8080:8080 -d mi-app-spring:1.0
+
+-------------------------------
+
+Ejecutar MySQL para desarrollo
+docker run --name mysql-dev -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=midb -p 3306:3306 -d mysql:8
+
+-------------------------------------------------
+
+Ejecutar PostgreSQL para desarrollo
+
+Copiardocker run --name postgres-dev -e POSTGRES_PASSWORD=password -e POSTGRES_DB=midb -p 5432:5432 -d postgres:13
+
+----------------------------------------------
+
+Docker Compose
+Archivo docker-compose.yml básico para aplicación Java + base de datos
+Copiarversion: '3'
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/midb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+
+  db:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=midb
+      - POSTGRES_PASSWORD=password
+
+-------------------------------------
+
+Comandos Docker Compose
+# Iniciar todos los servicios definidos
+docker-compose up -d
+
+# Detener todos los servicios
+docker-compose down
+
+# Ver logs de todos los servicios
+docker-compose logs
+
+# Ver logs de un servicio específico
+docker-compose logs app
+
+# Reconstruir servicios
+docker-compose build
+
+# Reiniciar un servicio específico
+docker-compose restart app
+Comandos adicionales útiles
+
+# Inspeccionar un contenedor para ver detalles
+docker inspect nombre-contenedor
+
+# Ver estadísticas de uso de recursos
+docker stats
+
+# Limpiar recursos no utilizados (contenedores parados, imágenes sin uso)
+docker system prune
+
+# Limpiar todo, incluyendo volúmenes
+docker system prune -a --volumes
+
+# Crear una red personalizada
+docker network create mi-red
+
+# Conectar contenedor a una red
+docker network connect mi-red nombre-contenedor
+
