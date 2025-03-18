@@ -30,7 +30,7 @@ spring:
       resourceserver:
         jwt:
           #Especifica la URI del servidor de autorización (authorization server), que es el encargado de emitir y validar los tokens.
-          issuer-uri: http://127.0.0.1:9100  #uri de servidor de autorizacion, RUTA BASICA
+          issuer-uri: ${IP_ADDR:http://127.0.0.1:9100}  #uri de servidor de autorizacion, RUTA BASICA
           #CONFIGURACION DE CLIENTE DE OAUTH2
       client:
         #se registra como un cliente del servidor de autorizacion, es decir, para que los usuarios se logeen mediante este
@@ -46,12 +46,12 @@ spring:
               - openid
               - profile
 #              - write
-#              - rea d
+#              - read
             client-name: client-app
             ##ESPECIFICAMOS CUAL ES EL PROOVEDOR DE AUTORIZACION
         provider:
           spring: #NOMBRE DECLARADO ARRIBA Y RUTA DEL SERVIDOR DE AUTORIZACION
-            issuer-uri: http://127.0.0.1:9100
+            issuer-uri: ${IP_ADDR:http://127.0.0.1:9100}
 
 
 

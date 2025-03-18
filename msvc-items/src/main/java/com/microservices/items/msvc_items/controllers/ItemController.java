@@ -32,15 +32,15 @@ public class ItemController {
     private final Logger logger = LoggerFactory.getLogger(ItemController.class);
 
     //PRUEBA DE SERVIDOR DE CONFIGURACION
-    @Value("${configuration.texto}")
-    private String text;
-
-    @GetMapping("/fetch-configs")
-    public ResponseEntity<?> fetchConfig(){
-
-        Map<String, String> config = Collections.singletonMap("text", text);
-        return ResponseEntity.ok(config);
-    }
+//    @Value("${configuration.texto}")
+//    private String text;
+//
+//    @GetMapping("/fetch-configs")
+//    public ResponseEntity<?> fetchConfig(){
+//
+//        Map<String, String> config = Collections.singletonMap("text", text);
+//        return ResponseEntity.ok(config);
+//    }
 
     @Autowired
     private IItemService itemService;
