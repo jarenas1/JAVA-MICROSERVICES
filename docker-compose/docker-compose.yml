@@ -1,0 +1,47 @@
+networks:
+  springcloud:
+
+services:
+  config-server:
+    container_name: config-server
+    image: config-server:v1
+    ports:
+      - "8888:8888"
+    restart: always #si falla sigue intentando levantarlo
+    networks:
+      - springcloud
+  eureka-server:
+    container_name: eureka-server
+    image: eureka-server:v1
+    ports:
+      - "8761:8761"
+    restart: always
+    networks:
+      - springcloud
+  mysql8:
+    container_name: mysqlspring
+    image: mysql
+    ports:
+      - "3307:3306"
+    restart: always
+    networks:
+      - springcloud
+    #VARIABLES DE ENTORNO
+    environment:
+      - MYSQL_DATABASE=db_springboot_cloud
+      - MYSQL_ROOT_PASSWORD=JAJEJA2121
+  zipkin-server:
+    container_name: zipkin-server
+    image: zipkin-server
+    ports:
+      - "9411:9411"
+    restart: always
+    networks:
+      - springcloud
+    #VARIABLES DE ENTORNO
+    environment:
+      - STORAGE_TYPE=mysql
+      - MYSQL_USER=urlruraqazplhpoa
+      - MYSQL_PASS=k9cljVhBmEu1yvilIPoD
+      - MYSQL_DB=bq3wnnen5rbatel2fp74
+      - MYSQL_HOST=bq3wnnen5rbatel2fp74-mysql.services.clever-cloud.com
