@@ -1,0 +1,35 @@
+networks:
+  springcloud:
+
+services:
+  spring-eureka:
+    container_name: spring-eureka
+    image: eureka-server:v1
+    ports:
+      - "8761:8761"
+    restart: always
+    networks:
+      - springcloud
+  msvc-products:
+    container_name: msvc-products
+    image: msvc-products:v1
+    ports:
+      - "8001:8001"
+    restart: always
+    networks:
+      - springcloud
+    #COSAS DE LAS QUE DEPENDE ESTE CONTENEDOR(No se levantara hasta que lo que lo alimenta se levante
+    depends_on:
+      - spring-eureka
+  msvc-items:
+    container_name: msvc-items
+    image: msvc-items:v1
+    ports:
+      - "8002:8002"
+    restart: always
+    networks:
+      - springcloud
+    #COSAS DE LAS QUE DEPENDE ESTE CONTENEDOR(No se levantara hasta que lo que lo alimenta se levante
+    depends_on:
+      - spring-eureka
+
