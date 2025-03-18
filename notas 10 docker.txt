@@ -32,7 +32,7 @@ ej: docker build -t config-server:v1 .
 
 6. Levantamos los contenedores docker run -p 8888:8888 --name Alias --network Name ImgeName 
 
--p es el primero es el puerto interno, es decir el puerto en el que se levantara en el contenedor y el otro es el externos es decir, en el que el contenedor se levantara en nuestro pc. -name Da como una especie de nombre de dominio.  -network es la network a la que lo añadiremos, como se creo anteriormente una, y lo ultimo es el nombre de la imagen, recordar el :versión
+-p es el primero es el puerto externo, es decir el puerto en el que se levantara en el pc y el otro es el interno es decir en el que se levantara en el container. -name Da como una especie de nombre de dominio.  -network es la network a la que lo añadiremos, como se creo anteriormente una, y lo ultimo es el nombre de la imagen, recordar el :versión
 
 EJ:  docker run -p 8888:8888 --name spring-config --network springcloud config-server:v1 
 
@@ -199,3 +199,154 @@ docker network create mi-red
 # Conectar contenedor a una red
 docker network connect mi-red nombre-contenedor
 
+
+
+
+--------------------------------------------------------
+
+CREAR BASE DE DATOS MYSQL CON DOCKER
+
+
+1. Vamos a dockerhub y buscamos la imagen oficial y copiamos el pull
+
+2. una vez bajada la imagen, crearemos un contenedor con esta y lo levantaremos, hay que tener en cuenta que usaremos el Docker run, pero debemos poner ciertas variables por medio de guiones - las cuales se especifican den Docker hub 
+
+docker run -p 3307:3306 -- network springcloud -e MYSQL_ROOT_PASSWORD=jarenas1 -e MYSQL_DATABASE=db_spring_cloud --name mysqlcloud mysql
+
+
+
+
+DOCKERIZACION DE ZIPKIN, CREAR CONTENEDOR: docker run -p 9411:9411 --name zipkin-server --network springcloud -e STORAGE_TYPE=mysql -e MYSQL_USER=urlruraqazplhpoa -e MYSQL_PASS=k9cljVhBmEu1yvilIPoD -e MYSQL_HOST=bq3wnnen5rbatel2fp74-mysql.services.clever-cloud.com zipkin-server:v1 
+
+Esto debido a que deseamos guardar los logs en la database
+
+
+AHORA TENEMOS QUE TENER EN CUENTA QUE EUREKA Y ZIPKIN YA NO ESTAN EN LOCALHOST SI NO ES DOCKER, por ende en vez de localhost, ponemos el nombre que tiene el contenedor ej, en vez de localhost:8080 ponemos eureka-server:8080
+
+zipkin, debemos configurarle la ruta, ya que por defecto el usa localhost
+
+
+
+AHORA DEBEREMOS AÑADIR EL RESTO DE MCRO SERVICIOS A DOCKER PARA QUE PUEDAN PERTENECER A LA MISMA NETWORK Y PUEDAN LEER POR MEDIO DEL NOMBRE DEL CONTENEDOR
+
+Como todos los msvc dependen de eureka y de zipkin, y al intentarlos dockerizar debemos generar el jar, no pasaran los test, debido a que no encontraran estos servidores, por ende para saltarnos elt est y generar el jar:
+
+./mvnw clean package -DskipTests
+
+ docker run -p 6666:6666 --name msvc-users --network springcloud msvc-users:v1
+
+
+
+DOCKERIZAR EL GATEWAY 
+
+
+IREMOS AL YML, y cambiaremos todos los localhost o los 127.0.0.1 por variables de entorno ${IP_ADDR:http://127.0.0.1:9100}
+
+LUEGO GENERAMOS EL JAR
+
+levantamos IMAGEN
+
+Y AL LEVANTAR EL CONTENEDOR, PONEMOS -e nombreVarEnt=192.168.1.133:9100  este valor es el valor de ip publica de nuestra casa
+
+
+
+
+BALANCEO DE CARGA: PODEMOS DECIRLE A DOCKER QUE EL PUERTO SEA ALEATORIO A LA HORA DE CREAR EL CONTENEDOR, en vez de -p ip1:ip2, ponemos solo -P para decir que el puerto sea automatico y en el docjerfile no ponemos
+
+
+Para generar varias instancias de un proyecto, es mandatorio que el puerto sea aleatorio, y simplemente por medio de la imagen generada inicialmente, vamos creando varios contenedores 
+
+
+
+
+DOCKER COMPOSE:
+
+Tenemos las configuraciones para generar un contenedor (Es como un orquestador) básicamente es lo mismo pero mas ordenadito
+
+CREARLO: nos vamos a la carpeta donde tenemos todos los microservicios y creamos una carpeta llamada docker-compose
+
+Creamos un archivo llamado docker-compose.yml
+
+en este yml, inicialmente crearemos el network de los containers
+
+networks:
+  springcloud:
+
+
+Luego crearemos las configuraciones de cada contenedor
+
+services:
+  config-server:
+    container_name: config-server
+    image: config-server:v1
+    ports:
+      - "8888:8888"
+    restart: always #si no levanta sigue intentando hasta que levante
+    networks:
+      - springcloud
+  eureka-server:
+    container_name: eureka-server
+    image: eureka-server:v1
+    ports:
+      - "8761:8761"
+    restart: always
+    networks:
+      - springcloud
+
+
+
+Y nos vamos a la carpeta donde esta en yml y ponermos Docker compose up
+
+Si hacemos este comando y ya están creados los contenedores solo los levanta
+
+Para detener podemos usar ctrl+c /Docker compose stop // o Docker compose down para detener y eliminar
+
+
+VARIABLES DE ENTORNO:
+
+Al crear un contenedor puede que necesitemos variables de entorno, para esto se añade esto a la creación del contenedor 
+
+  mysql8:
+    container_name: mysqlspring
+    image: mysql
+    ports:
+      - "3307:3306"
+    restart: always
+    networks:
+      - springcloud
+    #VARIABLES DE ENTORNO
+    environment:
+      - MYSQL_DATABASE=db_springboot_cloud
+      - MYSQL_ROOT_PASSWORD=JAJEJA2121
+
+AÑADIR SCHEMA A UNA BASE DE DATOS:
+
+Como estos contenedores recién van a ser levantados, la base de datos estará vacia, por ende si deseamos añadir un esquema -- debemos hacer todo desde MySQL
+
+
+DEPENDENCIAS EN LOS CONTENEDORES:
+
+Tenemos contenedores que pueden depender de otro contenedores, por ende lo que podemos hacer es que podemos crear el contenedor así 
+
+  msvc-products:
+    container_name: msvc-products
+    image: msvc-products
+    ports:
+      - "8001:8001"
+    restart: always
+    networks:
+      - springcloud
+    #COSAS DE LAS QUE DEPENDE ESTE CONTENEDOR(No se levantara hasta que lo que lo alimenta se levante
+    depends_on:
+      - eureka-server
+      - zipkin-server
+
+LEVANTQAR UN CONTENEDOR ESPECIFICO:
+
+Docker compose up -d containerName
+
+
+LEVANTAR VARIAS INSTANCIAS, PARA ESTO DEBEMOS TENER EL PUERTO ALEATORIO, QUE SE ASIGNA DEJANDO LA XREACION DEL CONTENEDOR SIN PUERTO, Y AÑADIMOS LA PROPIEDAD 
+
+deploy:
+	replicas: #
