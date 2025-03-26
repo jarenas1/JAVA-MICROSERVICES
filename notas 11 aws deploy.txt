@@ -1,0 +1,18 @@
+ Desplegaremos todo en aws, la idea seria que cada msvc estuviera en una maquina virtual, pero para efectos prácticos usaremos una y despletgaremos todo ahí, usaremos uns ec2 o una csc, la primera es una vps, en la cual nostros os debemos encargar de administrar absolutamente todo, mientras que la sr4gunda será administrada por amazon, además usaremos RDS para usar db relacionales
+
+
+Para la ec2, lo único diferente es que crearemos un par de ssh, le ponemos RSA y .pem y lo guardamos
+
+Para habilitar puertos, vamos a la configuración de seguridad, editamos las reglas y añadimos los puertos que deseamos, poniendo la opción ipv4 para dar acceso a todo el mundo
+
+Para conectamos desde Windows, usamos git bash  ssh -i ec2-cloud.pem ec2-user@ip publica
+
+Luego le pasaremos del local a la virtual, el Docker compose, abrimos una terminal y nos metemos a la carpeta que lo contiene y ponemos
+
+scp -i ec2-cloud.pem docker-compose.yml ec2-user@ipV4:~/.
+docker-compose.yml 
+
+
+Instalar Docker:  sudo yum install -y Docker // sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+
+sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose

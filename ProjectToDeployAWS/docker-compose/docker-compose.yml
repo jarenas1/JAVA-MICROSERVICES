@@ -1,34 +1,34 @@
 networks:
-  springcloud:
+  springclouddeploy:
 
 services:
   spring-eureka:
     container_name: spring-eureka
-    image: eureka-server:v1
+    image: jarenas1/eureka-server-jarenas1
     ports:
       - "8761:8761"
     restart: always
     networks:
-      - springcloud
+      - springclouddeploy
   msvc-products:
     container_name: msvc-products
-    image: msvc-products:v1
+    image: jarenas1/msvc-products-jarenas1
     ports:
       - "8001:8001"
     restart: always
     networks:
-      - springcloud
+      - springclouddeploy
     #COSAS DE LAS QUE DEPENDE ESTE CONTENEDOR(No se levantara hasta que lo que lo alimenta se levante
     depends_on:
       - spring-eureka
   msvc-items:
     container_name: msvc-items
-    image: msvc-items:v1
+    image: jarenas1/msvc-items-jarenas1
     ports:
       - "8002:8002"
     restart: always
     networks:
-      - springcloud
+      - springclouddeploy
     #COSAS DE LAS QUE DEPENDE ESTE CONTENEDOR(No se levantara hasta que lo que lo alimenta se levante
     depends_on:
       - spring-eureka
